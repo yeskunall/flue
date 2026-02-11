@@ -1,0 +1,10 @@
+[project]
+name = "github-issues-pipeline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "dlt[duckdb,workspace]>=1.21.0",
+    "streamlit>=1.53.1",
+]
