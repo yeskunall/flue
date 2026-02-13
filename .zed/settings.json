@@ -1,0 +1,9 @@
+{
+  "context_servers": {
+    "DuckDB (read-only)": {
+      "command": "uvx",
+      "args": ["mcp-server-motherduck", "--db-path", "github_issues.duckdb"],
+      "remote": false,
+    },
+  },
+}
