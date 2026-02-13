@@ -11,7 +11,7 @@ def load_zed_repo_issues() -> None:
         dataset_name="zed_issues",
     )
     data = github_issues("zed-industries", "zed", items_per_page=25)
-    print(pipeline.run(data))
+    print(pipeline.run(data, loader_file_format="parquet"))
 
 
 if __name__ == "__main__":

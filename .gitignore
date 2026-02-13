@@ -16,5 +16,9 @@ wheels/
 # Environment variables / secrets
 .env.*
 
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
 # Conductor workspace context
 .context/
