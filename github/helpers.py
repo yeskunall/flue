@@ -27,7 +27,7 @@ def _get_auth_header(access_token: Optional[str]) -> StrAny:
 #
 def get_rest_pages(access_token: Optional[str], query: str) -> Iterator[List[StrAny]]:
     def _request(page_url: str) -> requests.Response:
-        r = requests.get(page_url, headers=_get_auth_header(access_token))
+        r = requests.get(page_url, headers=_get_auth_header(access_token), timeout=30)
         print(
             f"got page {page_url}, requests left: " + r.headers["x-ratelimit-remaining"]
         )
@@ -150,6 +150,17 @@ def _is_transient_error(e: Exception) -> bool:
     return False
 
 
+def _is_graphql_rate_limit(data: dict, response) -> bool:
+    """Check if a GraphQL 200 response is actually a rate limit error."""
+    errors = data.get("errors", [])
+    if any(e.get("type") == "RATE_LIMITED" for e in errors):
+        return True
+    remaining = response.headers.get("x-ratelimit-remaining")
+    if remaining is not None and int(remaining) == 0:
+        return True
+    return False
+
+
 def _run_graphql_query(
     access_token: str, query: str, variables: DictStrAny, max_transient_retries: int = 10
 ) -> Tuple[StrAny, StrAny]:
@@ -161,10 +172,17 @@ def _run_graphql_query(
                 GRAPHQL_API_BASE_URL,
                 json={"query": query, "variables": variables},
                 headers=_get_auth_header(access_token),
+                timeout=30,
             )
-            
+            r.raise_for_status()
+
             data = r.json()
             if "errors" in data:
+                if _is_graphql_rate_limit(data, r):
+                    wait_time = _get_reset_wait_time(r)
+                    print(f"GraphQL rate limited. Waiting {wait_time}s until reset...")
+                    time.sleep(wait_time)
+                    continue
                 raise ValueError(data)
             data = data["data"]
             # pop rate limits
