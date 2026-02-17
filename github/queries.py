@@ -17,7 +17,8 @@ query($owner: String!, $name: String!, $issues_per_page: Int!, $first_reactions:
         startCursor
       }
       nodes {
-        # id
+        id
+        databaseId
         number
         url
         title
@@ -28,7 +29,20 @@ query($owner: String!, $name: String!, $issues_per_page: Int!, $first_reactions:
         closedAt
         createdAt
         state
+        stateReason
         updatedAt
+        locked
+        activeLockReason
+        isPinned
+        createdViaEmail
+        includesCreatedEdit
+        lastEditedAt
+        publishedAt
+        trackedIssuesCount
+        editor { login avatarUrl url }
+        duplicateOf { number url title }
+        parent { number url title }
+        issueType { id name description color }
         labels(first: 10) { nodes { name color description } }
         assignees(first: 10) { nodes { login avatarUrl url } }
         milestone { number title state dueOn }
