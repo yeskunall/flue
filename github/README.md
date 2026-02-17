@@ -1,11 +1,10 @@
 # GitHub README.md
 
-This `dlt` GitHub verified source, accesses the GitHub API from two `dlt` endpoints:
+This `dlt` GitHub verified source, accesses the GitHub API from a `dlt` endpoint:
 
 | endpoint | description |
 | --- | --- |
-| github_reactions | loads the issues and pullRequests from the repository |
-| github_repo_events | loads the various repo_events from the repository like emoticons etc. |
+| github_issues | loads the issues and pullRequests from the repository |
 
 ## Initialize the pipeline
 
@@ -39,7 +38,7 @@ To learn about grabbing the GitHub credentials and configuring the verified sour
 1. Install the necessary dependencies by running the following command:
 
     ```bash
-    pip install -r requirements.txt
+    uv sync
     ```
 
 2. Now the pipeline can be run by using the command:
@@ -51,10 +50,7 @@ To learn about grabbing the GitHub credentials and configuring the verified sour
 3. To make sure that everything is loaded as expected, use the command:
 
     ```bash
-    dlt pipeline github_reactions show
+    dlt pipeline github_issues show
     ```
 
-
-
-💡 To explore additional customizations for this pipeline, we recommend referring to the official `dlt` GitHub documentation. It provides comprehensive information and guidance on how to further customize and tailor the pipeline to suit your specific needs. You can find the `dlt` GitHub documentation in [Setup Guide: GitHub](https://dlthub.com/docs/dlt-ecosystem/verified-sources/github).
-
+To explore additional customizations for this pipeline, we recommend referring to the official `dlt` GitHub documentation. It provides comprehensive information and guidance on how to further customize and tailor the pipeline to suit your specific needs. You can find the `dlt` GitHub documentation in [Setup Guide: GitHub](https://dlthub.com/docs/dlt-ecosystem/verified-sources/github).
