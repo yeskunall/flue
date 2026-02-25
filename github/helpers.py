@@ -118,6 +118,8 @@ def _extract_nested_nodes(item: DictStrAny) -> DictStrAny:
         item["labels"] = item["labels"].get("nodes", [])
     if "assignees" in item and isinstance(item["assignees"], dict):
         item["assignees"] = item["assignees"].get("nodes", [])
+    if "closedEvents" in item and isinstance(item["closedEvents"], dict):
+        item["closedEvents"] = item["closedEvents"].get("nodes", [])
     return item
 
 

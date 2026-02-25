@@ -45,6 +45,18 @@ query($owner: String!, $name: String!, $issues_per_page: Int!, $first_reactions:
         issueType { id name description color }
         labels(first: 10) { nodes { name color description } }
         assignees(first: 10) { nodes { login avatarUrl url } }
+        closedEvents: timelineItems(last: 1, itemTypes: [CLOSED_EVENT]) {
+          nodes {
+            ... on ClosedEvent {
+              actor { login url }
+              createdAt
+              closer {
+                ... on PullRequest { number url title }
+                ... on Commit { oid url }
+              }
+            }
+          }
+        }
         milestone { number title state dueOn }
         reactions(first: $first_reactions) {
           totalCount
