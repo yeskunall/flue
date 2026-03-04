@@ -57,6 +57,24 @@ query($owner: String!, $name: String!, $issues_per_page: Int!, $first_reactions:
             }
           }
         }
+        labeledEvents: timelineItems(first: 20, itemTypes: [LABELED_EVENT]) {
+          nodes {
+            ... on LabeledEvent {
+              actor { login url }
+              createdAt
+              label { name color description }
+            }
+          }
+        }
+        unlabeledEvents: timelineItems(first: 20, itemTypes: [UNLABELED_EVENT]) {
+          nodes {
+            ... on UnlabeledEvent {
+              actor { login url }
+              createdAt
+              label { name color description }
+            }
+          }
+        }
         milestone { number title state dueOn }
         reactions(first: $first_reactions) {
           totalCount
