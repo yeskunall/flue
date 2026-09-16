@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
+    "vitest/valid-expect": ["warn", { "maxArgs": 2 }]
+  }
+}

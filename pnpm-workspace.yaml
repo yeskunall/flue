@@ -1,0 +1,24 @@
+packages:
+  - discord
+  - shared/*
+
+catalog:
+  '@discordjs/rest': 2.6.3
+  '@flue/cli': 2.0.3
+  '@flue/runtime': 2.0.3
+  '@t3-oss/env-core': 0.13.11
+  '@types/node': 24.13.3
+  discord-api-types: 0.38.53
+  oxlint: 1.82.0
+  typescript: 7.0.2
+  valibot: 1.4.2
+  vitest: 4.1.11
+
+allowBuilds:
+  '@google/genai': false
+  core-js-pure: false
+  esbuild: true
+  protobufjs: false
+
+minimumReleaseAge: 10080
+saveExact: true

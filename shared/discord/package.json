@@ -1,0 +1,28 @@
+{
+  "name": "@repo/discord",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./reader": "./src/reader.ts",
+    "./members": "./src/members.ts",
+    "./metrics": "./src/metrics.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@discordjs/rest": "catalog:",
+    "@t3-oss/env-core": "catalog:",
+    "discord-api-types": "catalog:",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

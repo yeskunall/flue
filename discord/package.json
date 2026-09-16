@@ -1,0 +1,26 @@
+{
+  "name": "@repo/discord-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/discord": "@repo/discord",
+    "#/discord/*": "@repo/discord/*",
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "ask": "flue run src/agents/analyst/agent.ts --name DiscordAnalyst",
+    "ask:continue": "flue run src/agents/analyst/agent.ts --name DiscordAnalyst --id discord-cli",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@flue/runtime": "catalog:",
+    "@repo/discord": "workspace:*",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@flue/cli": "catalog:",
+    "discord-api-types": "catalog:",
+    "vitest": "catalog:"
+  }
+}
