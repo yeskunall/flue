@@ -11,6 +11,14 @@
     "**/node_modules/**"
   ],
   "insertFinalNewline": true,
+  "overrides": [
+    {
+      "files": ["**/*.md"],
+      "options": {
+        "proseWrap": "always"
+      }
+    }
+  ],
   "printWidth": 80,
   "quoteProps": "consistent",
   "semi": true,
