@@ -14,16 +14,16 @@ endpoints, or background collection.
 
 ## Questions you can ask
 
-| Example question | What the agent can report |
-| --- | --- |
-| "How many members do we have, and how many are online?" | Discord's current approximate member and online counts. |
-| "What channels, roles, and active threads do we have?" | The server's categories, channels, roles, and active threads visible to the bot. |
-| "Which channels had the most messages in the last seven days?" | Message counts and channel rankings based on messages the bot can read. |
-| "Which channels have been quiet for 30 days?" | Each checked channel's latest visible message and whether it is older than the threshold. |
-| "How many users have Verified but not Muted?" | The matching-member count, with details for up to 25 people. Role filters can require or exclude multiple roles. |
-| "What events are coming up?" | Upcoming and ongoing scheduled events. Subscriber counts show interest, not attendance. |
-| "What moderation actions happened this week?" | Recent moderation and administrative entries from the audit log. |
-| "Which roles or channel permissions should we review?" | High-impact permissions on assignable roles and elevated `@everyone` channel overrides. |
+| Example question                                               | What the agent can report                                                                                        |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| "How many members do we have, and how many are online?"        | Discord's current approximate member and online counts.                                                          |
+| "What channels, roles, and active threads do we have?"         | The server's categories, channels, roles, and active threads visible to the bot.                                 |
+| "Which channels had the most messages in the last seven days?" | Message counts and channel rankings based on messages the bot can read.                                          |
+| "Which channels have been quiet for 30 days?"                  | Each checked channel's latest visible message and whether it is older than the threshold.                        |
+| "How many users have Verified but not Muted?"                  | The matching-member count, with details for up to 25 people. Role filters can require or exclude multiple roles. |
+| "What events are coming up?"                                   | Upcoming and ongoing scheduled events. Subscriber counts show interest, not attendance.                          |
+| "What moderation actions happened this week?"                  | Recent moderation and administrative entries from the audit log.                                                 |
+| "Which roles or channel permissions should we review?"         | High-impact permissions on assignable roles and elevated `@everyone` channel overrides.                          |
 
 These answers depend on the bot's access and the
 [scan limits](#limits-and-unavailable-data). The agent is instructed to fetch
@@ -50,11 +50,11 @@ explain how to get a replacement if you lose it.
 
 Grant only the permissions needed for the data you want:
 
-| Permission | Used for |
-| --- | --- |
-| View Channels | Seeing channel structure and accessible channels |
-| Read Message History | Message activity and latest-message checks |
-| View Audit Log | Optional; recent moderation and administrative activity |
+| Permission           | Used for                                                |
+| -------------------- | ------------------------------------------------------- |
+| View Channels        | Seeing channel structure and accessible channels        |
+| Read Message History | Message activity and latest-message checks              |
+| View Audit Log       | Optional; recent moderation and administrative activity |
 
 You don't need `Administrator`, message-send permissions, webhooks, or a
 Gateway connection. Message Content intent isn't needed either. Activity
@@ -296,8 +296,8 @@ directory. This CLI uses Flue's defaults and needs no `app.ts`,
 Use `#/` for project imports. In the Flue app:
 
 ```ts
-import { useDiscordTools } from '#/agents/analyst/tools/discord.ts';
-import { getDiscordReader } from '#/discord/client';
+import { useDiscordTools } from "#/agents/analyst/tools/discord.ts";
+import { getDiscordReader } from "#/discord/client";
 ```
 
 Each package maps `#/*` to its own `src/` directory in `package.json`.

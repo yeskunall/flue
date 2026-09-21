@@ -1,10 +1,6 @@
 {
   "name": "agent-workspace",
   "private": true,
-  "packageManager": "pnpm@11.25.0",
-  "engines": {
-    "node": "^24.14.0"
-  },
   "scripts": {
     "ask": "pnpm --silent --filter @repo/discord-app ask",
     "ask:continue": "pnpm --silent --filter @repo/discord-app ask:continue",
@@ -18,5 +14,9 @@
     "oxlint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "engines": {
+    "node": "^24.14.0"
+  },
+  "packageManager": "pnpm@11.25.0"
 }
