@@ -3,11 +3,11 @@ packages:
   - shared/*
 
 catalog:
-  '@discordjs/rest': 2.6.3
-  '@flue/cli': 2.0.3
-  '@flue/runtime': 2.0.3
-  '@t3-oss/env-core': 0.13.11
-  '@types/node': 24.13.3
+  "@discordjs/rest": 2.6.3
+  "@flue/cli": 2.0.3
+  "@flue/runtime": 2.0.3
+  "@t3-oss/env-core": 0.13.11
+  "@types/node": 24.13.3
   discord-api-types: 0.38.53
   oxlint: 1.82.0
   typescript: 7.0.2
@@ -15,7 +15,7 @@ catalog:
   vitest: 4.1.11
 
 allowBuilds:
-  '@google/genai': false
+  "@google/genai": false
   core-js-pure: false
   esbuild: true
   protobufjs: false
