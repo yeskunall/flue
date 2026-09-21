@@ -2,9 +2,17 @@ name: CI
 
 on:
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - .git-blame-ignore-revs
+      - .github/workflows/pullfrog.yml
   push:
     branches:
       - main
+    paths-ignore:
+      - "**/*.md"
+      - .git-blame-ignore-revs
+      - .github/workflows/pullfrog.yml
 
 permissions:
   contents: read
