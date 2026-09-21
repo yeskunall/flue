@@ -1,4 +1,4 @@
-# Discord
+## Discord
 
 `DiscordAnalyst` uses Claude Haiku 4.5 and Discord REST API v10 to answer
 terminal questions about one configured Discord server.
@@ -7,7 +7,7 @@ terminal questions about one configured Discord server.
 > The bot is read-only. It cannot post messages, moderate members, or change
 > server settings.
 
-## What the agent can report
+### What the agent can report
 
 | Example question                                               | What the agent checks                                                                                    |
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -22,9 +22,9 @@ terminal questions about one configured Discord server.
 
 Results depend on the bot's permissions and the [limits](#limits).
 
-## Configure
+### Configure
 
-### Discord access
+#### Discord access
 
 Use a bot installed in the server you want to query. Create or manage the bot in
 the [Discord Developer Portal](https://discord.com/developers/applications).
@@ -52,26 +52,7 @@ Without the required intent access, the tool reports member lookups as
 unavailable rather than returning a zero count. The other tools do not require
 privileged intents.
 
-### Credentials
-
-Copy the environment file:
-
-```sh
-cp discord/.env.example discord/.env
-```
-
-Add your credentials to `discord/.env`:
-
-```dotenv
-ANTHROPIC_API_KEY=your_anthropic_api_key
-DISCORD_BOT_TOKEN=your_discord_bot_token
-DISCORD_GUILD_ID=your_discord_server_id
-```
-
-All questions use `DISCORD_GUILD_ID`. Keep `discord/.env` out of source control,
-and do not put credentials in prompts.
-
-## Run
+### Run
 
 ```sh
 pnpm ask --message "Give me an overview of this server."
@@ -92,7 +73,7 @@ starts a separate conversation.
 Answers go to stdout. Progress and errors go to stderr. Use `--json` for
 machine-readable output.
 
-## Limits
+### Limits
 
 | Query             | Coverage                                                                                                                         |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -117,7 +98,7 @@ machine-readable output.
 - The tools mark denied channel history as unavailable. Other access errors may
   fail the whole query.
 
-## Conversation history
+### Conversation history
 
 Flue stores conversation history in `discord/node_modules/.cache/flue/run.db` by
 default.
