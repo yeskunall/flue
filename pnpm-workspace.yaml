@@ -9,6 +9,7 @@ catalog:
   "@t3-oss/env-core": 0.13.11
   "@types/node": 24.13.3
   discord-api-types: 0.38.53
+  oxfmt: 0.67.0
   oxlint: 1.82.0
   typescript: 7.0.2
   valibot: 1.4.2

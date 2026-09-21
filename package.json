@@ -4,13 +4,16 @@
   "scripts": {
     "ask": "pnpm --silent --filter @repo/discord-app ask",
     "ask:continue": "pnpm --silent --filter @repo/discord-app ask:continue",
-    "lint": "oxlint discord shared",
-    "lint:fix": "pnpm run lint --fix --fix-suggestions",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint --max-warnings 0 .",
+    "lint:fix": "pnpm run lint --fix",
     "test": "pnpm -r test",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

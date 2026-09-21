@@ -1,0 +1,5 @@
+# Ignore mechanical formatting commits, not functional changes.
+# Each entry must be a full commit hash from the final merged history.
+
+# Apply Oxfmt formatting and import sorting.
+62e22f2365b05d9f3eee2700964df863682d7d90

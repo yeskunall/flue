@@ -181,7 +181,7 @@ describe("REST member lookup", () => {
     const result = await reader.getMembersByRoles({ allOf: ["Verified"] });
     expect(result.guildId).toBe(GUILD);
     expect(result.status).toBe("complete");
-    expect(result.members.map(member => member.id)).toEqual([
+    expect(result.members.map(resultMember => resultMember.id)).toEqual([
       "200000000000000001",
     ]);
     expect(result.retrievedAt).toBe("2026-09-01T12:00:00.000Z");
@@ -394,7 +394,7 @@ describe("REST member lookup", () => {
         GUILD,
         { noneOf: ["Verified"] },
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/Invalid type/);
   });
 
   test("keeps validated matches as partial if a later page is malformed", async () => {
@@ -507,6 +507,6 @@ describe("REST member lookup", () => {
         GUILD,
         input,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/^(Invalid|Specify)/);
   });
 });
