@@ -340,7 +340,7 @@ async function getWithinDeadline(
   query?: URLSearchParams,
 ): Promise<unknown> {
   signal.throwIfAborted();
-  let onAbort: () => void = () => {};
+  let onAbort: (() => void) | undefined;
   const aborted = new Promise<never>((_resolve, reject) => {
     onAbort = () => reject(signal.reason);
     signal.addEventListener("abort", onAbort, { once: true });
@@ -354,7 +354,7 @@ async function getWithinDeadline(
     signal.throwIfAborted();
     return result;
   } finally {
-    signal.removeEventListener("abort", onAbort);
+    if (onAbort) signal.removeEventListener("abort", onAbort);
   }
 }
 

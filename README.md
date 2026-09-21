@@ -223,31 +223,51 @@ the database first if you want to keep it.
 
 ## Development
 
-Check both packages from the repository root:
+Install and check the whole workspace from the repository root:
 
 ```sh
+pnpm install --frozen-lockfile
+pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test
 ```
 
-TypeScript checks source and tests across both workspaces using the root
-`tsconfig.json`.
+GitHub Actions runs these checks for pull requests and pushes to `main`.
+Formatting and lint warnings both fail the checks. TypeScript checks source and
+tests across both workspaces using the root `tsconfig.json`; tests use fake
+Discord responses and never contact Discord.
 
-Tests use fake Discord responses and never contact Discord.
+Run `pnpm format` to apply Oxfmt's canonical formatting and import sorting.
+Imports through `#/` are treated as internal, while side-effect imports retain
+their order. Oxfmt also normalizes `package.json` keys. The shared editor and
+formatter policy uses two spaces, double quotes, semicolons, LF line endings,
+and an 80-column target.
 
-Oxlint checks for bugs and suspicious code, including TypeScript and Vitest
-checks. These rules report warnings, which don't make `pnpm lint` fail.
-The `valid-expect` rule allows two arguments because Vitest accepts an
-optional failure message.
+Run `pnpm lint:fix` for Oxlint's safe fixes only. Suggestions and dangerous
+fixes are intentionally excluded; manually resolve anything that remains.
+The `valid-expect` rule allows two arguments because Vitest accepts an optional
+failure message.
 
-Run `pnpm lint:fix` to apply available safe fixes and suggestions. Suggestions
-can change behavior, so review the diff and run the checks above afterward.
-Some findings still need manual changes. Dangerous fixes aren't enabled.
+Oxlint enables the `correctness` and `suspicious` categories across its
+TypeScript, Unicorn, Oxc, import, and Vitest plugins. It adds focused rules from
+the
+[reference ESLint configuration](https://github.com/yeskunall/astro-umami/blob/854a3751e8209b00843b60bc1f4838b744d02878/eslint.config.ts)
+when enabling an entire additional category would introduce unrelated policy.
+Option-sensitive rules spell out compatibility settings instead of relying on
+Oxlint defaults.
 
-Broad performance and style categories aren't enabled. Discord pagination
-must fetch pages in order, and its worker loops deliberately limit
-concurrency. Don't parallelize those awaits to satisfy a lint rule.
+Oxfmt replaces the reference's `@stylistic/eslint-plugin` rules; that plugin is
+an ESLint style plugin, not Stylelint, so this repository does not add CSS
+tooling. The tools are not perfectly rule-for-rule compatible: Oxfmt has no
+exact setting for every Stylistic layout choice, and Oxlint relies on its parser
+for the unsupported ESLint `no-octal` check. Oxfmt's output is the source of
+truth where the style engines differ. Type-aware linting is not enabled.
+
+The `perf`, `style`, `pedantic`, `restriction`, and `nursery` categories aren't
+enabled wholesale. Discord pagination must fetch pages in order, and its worker
+loops deliberately limit concurrency. Don't parallelize those awaits to satisfy
+a lint rule.
 
 ### Layout and responsibilities
 
