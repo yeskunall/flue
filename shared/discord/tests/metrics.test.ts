@@ -1,40 +1,41 @@
-import { ChannelType, PermissionFlagsBits } from 'discord-api-types/v10';
-import { describe, expect, test } from 'vitest';
+import { ChannelType, PermissionFlagsBits } from "discord-api-types/v10";
+import { describe, expect, test } from "vitest";
+
 import {
   assessPermissionRisks,
   calculateInactiveChannels,
   calculateMessageActivity,
-} from '#/metrics.ts';
+} from "#/metrics.ts";
 import type {
   ChannelMessageScan,
   LatestMessageObservation,
-} from '#/metrics.ts';
+} from "#/metrics.ts";
 
 const PERIOD = {
-  start: '2026-08-20T12:00:00.000Z',
-  end: '2026-08-27T12:00:00.000Z',
+  start: "2026-08-20T12:00:00.000Z",
+  end: "2026-08-27T12:00:00.000Z",
 };
 
-describe('calculateMessageActivity', () => {
-  test('counts only messages inside the observation period and ranks ties by channel name', () => {
+describe("calculateMessageActivity", () => {
+  test("counts only messages inside the observation period and ranks ties by channel name", () => {
     const scans: ChannelMessageScan[] = [
       {
-        channelId: '1',
-        channelName: 'support',
-        status: 'complete',
+        channelId: "1",
+        channelName: "support",
+        status: "complete",
         messages: [
-          { id: 'm1', timestamp: '2026-08-27T11:00:00.000Z' },
-          { id: 'm2', timestamp: '2026-08-21T12:00:00.000Z' },
-          { id: 'old', timestamp: '2026-08-20T11:59:59.000Z' },
+          { id: "m1", timestamp: "2026-08-27T11:00:00.000Z" },
+          { id: "m2", timestamp: "2026-08-21T12:00:00.000Z" },
+          { id: "old", timestamp: "2026-08-20T11:59:59.000Z" },
         ],
       },
       {
-        channelId: '2',
-        channelName: 'announcements',
-        status: 'complete',
+        channelId: "2",
+        channelName: "announcements",
+        status: "complete",
         messages: [
-          { id: 'm3', timestamp: '2026-08-26T12:00:00.000Z' },
-          { id: 'm4', timestamp: '2026-08-25T12:00:00.000Z' },
+          { id: "m3", timestamp: "2026-08-26T12:00:00.000Z" },
+          { id: "m4", timestamp: "2026-08-25T12:00:00.000Z" },
         ],
       },
     ];
@@ -43,14 +44,14 @@ describe('calculateMessageActivity', () => {
       visibleMessageCount: 4,
       ranking: [
         {
-          channelId: '2',
-          channelName: 'announcements',
+          channelId: "2",
+          channelName: "announcements",
           visibleMessageCount: 2,
           countIsLowerBound: false,
         },
         {
-          channelId: '1',
-          channelName: 'support',
+          channelId: "1",
+          channelName: "support",
           visibleMessageCount: 2,
           countIsLowerBound: false,
         },
@@ -60,23 +61,23 @@ describe('calculateMessageActivity', () => {
     });
   });
 
-  test('marks capped counts as lower bounds and keeps unavailable channels out of the ranking', () => {
+  test("marks capped counts as lower bounds and keeps unavailable channels out of the ranking", () => {
     const scans: ChannelMessageScan[] = [
       {
-        channelId: '1',
-        channelName: 'busy',
-        status: 'capped',
+        channelId: "1",
+        channelName: "busy",
+        status: "capped",
         messages: [
-          { id: 'm1', timestamp: '2026-08-27T11:00:00.000Z' },
-          { id: 'm2', timestamp: '2026-08-27T10:00:00.000Z' },
+          { id: "m1", timestamp: "2026-08-27T11:00:00.000Z" },
+          { id: "m2", timestamp: "2026-08-27T10:00:00.000Z" },
         ],
       },
       {
-        channelId: '2',
-        channelName: 'private',
-        status: 'unavailable',
+        channelId: "2",
+        channelName: "private",
+        status: "unavailable",
         messages: [],
-        reason: 'Missing View Channel or Read Message History permission.',
+        reason: "Missing View Channel or Read Message History permission.",
       },
     ];
 
@@ -84,120 +85,120 @@ describe('calculateMessageActivity', () => {
       visibleMessageCount: 2,
       ranking: [
         {
-          channelId: '1',
-          channelName: 'busy',
+          channelId: "1",
+          channelName: "busy",
           visibleMessageCount: 2,
           countIsLowerBound: true,
         },
       ],
-      cappedChannels: ['busy'],
+      cappedChannels: ["busy"],
       unavailableChannels: [
         {
-          channelId: '2',
-          channelName: 'private',
-          reason: 'Missing View Channel or Read Message History permission.',
+          channelId: "2",
+          channelName: "private",
+          reason: "Missing View Channel or Read Message History permission.",
         },
       ],
     });
   });
 });
 
-describe('calculateInactiveChannels', () => {
-  test('separates inactive, empty, active, and permission-blocked channels', () => {
+describe("calculateInactiveChannels", () => {
+  test("separates inactive, empty, active, and permission-blocked channels", () => {
     const observations: LatestMessageObservation[] = [
       {
-        channelId: '1',
-        channelName: 'active',
-        status: 'available',
-        latestVisibleMessageAt: '2026-08-26T12:00:00.000Z',
+        channelId: "1",
+        channelName: "active",
+        status: "available",
+        latestVisibleMessageAt: "2026-08-26T12:00:00.000Z",
       },
       {
-        channelId: '2',
-        channelName: 'old',
-        status: 'available',
-        latestVisibleMessageAt: '2026-07-01T12:00:00.000Z',
+        channelId: "2",
+        channelName: "old",
+        status: "available",
+        latestVisibleMessageAt: "2026-07-01T12:00:00.000Z",
       },
       {
-        channelId: '3',
-        channelName: 'empty',
-        status: 'available',
+        channelId: "3",
+        channelName: "empty",
+        status: "available",
         latestVisibleMessageAt: null,
       },
       {
-        channelId: '4',
-        channelName: 'private',
-        status: 'unavailable',
-        reason: 'Missing View Channel or Read Message History permission.',
+        channelId: "4",
+        channelName: "private",
+        status: "unavailable",
+        reason: "Missing View Channel or Read Message History permission.",
       },
     ];
 
     expect(
       calculateInactiveChannels(observations, {
-        observedAt: '2026-08-27T12:00:00.000Z',
+        observedAt: "2026-08-27T12:00:00.000Z",
         thresholdDays: 30,
       }),
     ).toEqual({
       inactive: [
         {
-          channelId: '2',
-          channelName: 'old',
-          latestVisibleMessageAt: '2026-07-01T12:00:00.000Z',
+          channelId: "2",
+          channelName: "old",
+          latestVisibleMessageAt: "2026-07-01T12:00:00.000Z",
           inactiveForDays: 57,
         },
       ],
-      noVisibleMessages: [{ channelId: '3', channelName: 'empty' }],
+      noVisibleMessages: [{ channelId: "3", channelName: "empty" }],
       activeChannelCount: 1,
       unavailableChannels: [
         {
-          channelId: '4',
-          channelName: 'private',
-          reason: 'Missing View Channel or Read Message History permission.',
+          channelId: "4",
+          channelName: "private",
+          reason: "Missing View Channel or Read Message History permission.",
         },
       ],
     });
   });
 });
 
-describe('assessPermissionRisks', () => {
-  test('flags high-impact assignable roles and everyone channel overrides without alleging abuse', () => {
+describe("assessPermissionRisks", () => {
+  test("flags high-impact assignable roles and everyone channel overrides without alleging abuse", () => {
     const administrator = PermissionFlagsBits.Administrator.toString();
     const mentionEveryone = PermissionFlagsBits.MentionEveryone.toString();
     const manageMessages = PermissionFlagsBits.ManageMessages.toString();
 
     expect(
       assessPermissionRisks({
-        guildId: 'guild',
+        guildId: "guild",
         roles: [
           {
-            id: 'guild',
-            name: '@everyone',
+            id: "guild",
+            name: "@everyone",
             permissions: mentionEveryone,
             managed: false,
           },
           {
-            id: 'admin',
-            name: 'Operations',
+            id: "admin",
+            name: "Operations",
             permissions: administrator,
             managed: false,
           },
           {
-            id: 'managed',
-            name: 'Managed integration',
+            id: "managed",
+            name: "Managed integration",
             permissions: administrator,
             managed: true,
           },
         ],
         channels: [
           {
-            id: 'channel',
-            name: 'general',
+            id: "channel",
+            name: "general",
             type: ChannelType.GuildText,
             permission_overwrites: [
               {
-                id: 'guild',
+                id: "guild",
                 type: 0,
                 allow: manageMessages,
-                deny: '0',
+                deny: "0",
               },
             ],
           },
@@ -205,31 +206,31 @@ describe('assessPermissionRisks', () => {
       }),
     ).toEqual([
       {
-        severity: 'high',
-        subjectType: 'role',
-        subjectId: 'admin',
-        subjectName: 'Operations',
-        permission: 'Administrator',
+        severity: "high",
+        subjectType: "role",
+        subjectId: "admin",
+        subjectName: "Operations",
+        permission: "Administrator",
         explanation:
-          'This assignable role bypasses channel-specific permission checks. Review who can receive it.',
+          "This assignable role bypasses channel-specific permission checks. Review who can receive it.",
       },
       {
-        severity: 'high',
-        subjectType: 'channel',
-        subjectId: 'channel',
-        subjectName: 'general',
-        permission: 'ManageMessages',
+        severity: "high",
+        subjectType: "channel",
+        subjectId: "channel",
+        subjectName: "general",
+        permission: "ManageMessages",
         explanation:
-          'The @everyone channel override grants a high-impact permission to every server member.',
+          "The @everyone channel override grants a high-impact permission to every server member.",
       },
       {
-        severity: 'medium',
-        subjectType: 'role',
-        subjectId: 'guild',
-        subjectName: '@everyone',
-        permission: 'MentionEveryone',
+        severity: "medium",
+        subjectType: "role",
+        subjectId: "guild",
+        subjectName: "@everyone",
+        permission: "MentionEveryone",
         explanation:
-          'The @everyone role grants a high-impact permission to every server member.',
+          "The @everyone role grants a high-impact permission to every server member.",
       },
     ]);
   });

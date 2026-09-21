@@ -15,10 +15,5 @@
     "types": ["node", "vitest"],
     "verbatimModuleSyntax": true
   },
-  "include": [
-    "discord/src",
-    "discord/tests",
-    "shared/*/src",
-    "shared/*/tests"
-  ]
+  "include": ["discord/src", "discord/tests", "shared/*/src", "shared/*/tests"]
 }

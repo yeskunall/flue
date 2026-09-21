@@ -1,8 +1,9 @@
-import { REST } from '@discordjs/rest';
-import type { RouteLike } from '@discordjs/rest';
-import { createEnv } from '@t3-oss/env-core';
-import * as v from 'valibot';
-import { DiscordReader } from '#/reader.ts';
+import { REST } from "@discordjs/rest";
+import type { RouteLike } from "@discordjs/rest";
+import { createEnv } from "@t3-oss/env-core";
+import * as v from "valibot";
+
+import { DiscordReader } from "#/reader.ts";
 
 let reader: DiscordReader | undefined;
 
@@ -22,12 +23,12 @@ export function getDiscordReader(): DiscordReader {
     onValidationError(issues) {
       // Report variable names without logging their values.
       throw new Error(
-        `Invalid environment variables: ${issues.map((issue) => issue.path?.[0]).join(', ')}`,
+        `Invalid environment variables: ${issues.map(issue => issue.path?.[0]).join(", ")}`,
       );
     },
   });
   const rest = new REST({
-    version: '10',
+    version: "10",
     retries: 3,
     globalRequestsPerSecond: 50,
   }).setToken(env.DISCORD_BOT_TOKEN);
