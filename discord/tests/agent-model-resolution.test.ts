@@ -2,7 +2,7 @@ import { createModels } from "@earendil-works/pi-ai";
 import { openrouterProvider } from "@earendil-works/pi-ai/providers/openrouter";
 import { describe, expect, test } from "vitest";
 
-import { DEFAULT_MODEL } from "#/agents/analyst/model.ts";
+import { DEFAULT_MODEL } from "#/agents/analyst/agent.ts";
 
 const models = createModels();
 models.setProvider(openrouterProvider());
