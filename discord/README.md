@@ -1,6 +1,6 @@
 ## Discord
 
-`DiscordAnalyst` uses Anthropic Claude Haiku 4.5 by default and the Discord REST
+`DiscordAnalyst` uses GPT-6 Luna via OpenRouter by default and the Discord REST
 API v10 to answer terminal questions about one configured Discord server. Its
 model can be changed to an OpenAI, OpenRouter, or Anthropic model.
 
@@ -33,26 +33,26 @@ umask 077 && op inject -i discord/.env.example -o discord/.env
 
 #### LLM provider and model
 
-The default model is `anthropic/claude-haiku-4-5`. Set `DISCORD_ANALYST_MODEL`
-in `discord/.env`, or prefix a command to select a model for that invocation.
-Flue accepts `provider/model` IDs; OpenRouter IDs include the upstream provider
-and model after `openrouter/`.
+The default model is GPT-6 Luna via OpenRouter (`openrouter/openai/gpt-6-luna`).
+Set `MODEL` in `discord/.env`, or prefix a command to select a model for that
+invocation. Flue accepts `provider/model` IDs; OpenRouter IDs include the
+upstream provider and model after `openrouter/`.
 
 Configure the API key for each provider you plan to use:
 
-| Provider   | Model ID example                  | API key              |
-| ---------- | --------------------------------- | -------------------- |
-| Anthropic  | `anthropic/claude-haiku-4-5`      | `ANTHROPIC_API_KEY`  |
-| OpenAI     | `openai/gpt-5.5`                  | `OPENAI_API_KEY`     |
-| OpenRouter | `openrouter/moonshotai/kimi-k2.6` | `OPENROUTER_API_KEY` |
+| Provider   | Model ID example               | API key              |
+| ---------- | ------------------------------ | -------------------- |
+| OpenRouter | `openrouter/openai/gpt-6-luna` | `OPENROUTER_API_KEY` |
+| OpenAI     | `openai/gpt-5.5`               | `OPENAI_API_KEY`     |
+| Anthropic  | `anthropic/claude-haiku-4-5`   | `ANTHROPIC_API_KEY`  |
 
 For example, these commands keep using the same `discord-cli` conversation while
 changing the model for the next submission:
 
 ```sh
-DISCORD_ANALYST_MODEL=anthropic/claude-haiku-4-5 pnpm ask:continue --message "Summarize the server."
-DISCORD_ANALYST_MODEL=openai/gpt-5.5 pnpm ask:continue --message "Check the active threads."
-DISCORD_ANALYST_MODEL=openrouter/moonshotai/kimi-k2.6 pnpm ask:continue --message "Count members by role."
+MODEL=openrouter/openai/gpt-6-luna pnpm ask:continue --message "Summarize the server."
+MODEL=openai/gpt-5.5 pnpm ask:continue --message "Check the active threads."
+MODEL=openrouter/moonshotai/kimi-k2.6 pnpm ask:continue --message "Count members by role."
 ```
 
 A submission uses one model; changing the setting does not switch a response

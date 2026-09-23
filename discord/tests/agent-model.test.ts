@@ -23,18 +23,18 @@ vi.mock("#/discord/client", () => ({
 
 import { DiscordAnalyst } from "#/agents/analyst/agent.ts";
 
-const originalModel = process.env.DISCORD_ANALYST_MODEL;
+const originalModel = process.env.MODEL;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  delete process.env.DISCORD_ANALYST_MODEL;
+  delete process.env.MODEL;
 });
 
 afterEach(() => {
   if (originalModel === undefined) {
-    delete process.env.DISCORD_ANALYST_MODEL;
+    delete process.env.MODEL;
   } else {
-    process.env.DISCORD_ANALYST_MODEL = originalModel;
+    process.env.MODEL = originalModel;
   }
 });
 
@@ -47,7 +47,7 @@ function getResponseMetadata() {
 
 describe("Discord analyst model selection", () => {
   test("uses the configured model for requests and response metadata", () => {
-    process.env.DISCORD_ANALYST_MODEL = "  openrouter/moonshotai/kimi-k2.6  ";
+    process.env.MODEL = "  openrouter/moonshotai/kimi-k2.6  ";
 
     DiscordAnalyst();
 
@@ -61,24 +61,27 @@ describe("Discord analyst model selection", () => {
     });
   });
 
-  test("defaults to Claude Haiku when no model is configured", () => {
+  test("defaults to GPT-6 Luna when no model is configured", () => {
     DiscordAnalyst();
 
-    expect(hooks.useModel).toHaveBeenCalledWith("anthropic/claude-haiku-4-5", {
-      thinkingLevel: "low",
-    });
-    expect(getResponseMetadata().model).toBe("anthropic/claude-haiku-4-5");
+    expect(hooks.useModel).toHaveBeenCalledWith(
+      "openrouter/openai/gpt-6-luna",
+      {
+        thinkingLevel: "low",
+      },
+    );
+    expect(getResponseMetadata().model).toBe("openrouter/openai/gpt-6-luna");
   });
 
   test("re-reads the selection on each render for the next submission", () => {
-    process.env.DISCORD_ANALYST_MODEL = "anthropic/claude-haiku-4-5";
+    process.env.MODEL = "openrouter/openai/gpt-6-luna";
     DiscordAnalyst();
 
-    process.env.DISCORD_ANALYST_MODEL = "openai/gpt-5.5";
+    process.env.MODEL = "openai/gpt-5.5";
     DiscordAnalyst();
 
     expect(hooks.useModel.mock.calls.map(([model]) => model)).toEqual([
-      "anthropic/claude-haiku-4-5",
+      "openrouter/openai/gpt-6-luna",
       "openai/gpt-5.5",
     ]);
   });
