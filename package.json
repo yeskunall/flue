@@ -1,6 +1,7 @@
 {
   "name": "agent-workspace",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "ask": "pnpm --silent --filter @repo/discord-app ask",
     "ask:continue": "pnpm --silent --filter @repo/discord-app ask:continue",
