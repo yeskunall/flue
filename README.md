@@ -14,12 +14,8 @@ pnpm install
 Configure credentials from 1Password:
 
 ```sh
-op inject -i discord/.env.example -o discord/.env
+umask 077 && op inject -i discord/.env.example -o discord/.env
 ```
-
-Each clone needs its own gitignored `discord/.env`.
-[`.delta/linked`](.delta/linked) links it into local Delta worktrees. Cloud
-Runners do not receive it.
 
 ### Agents
 
