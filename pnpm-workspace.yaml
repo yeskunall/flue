@@ -4,6 +4,7 @@ packages:
 
 catalog:
   "@discordjs/rest": 2.6.3
+  "@earendil-works/pi-ai": 0.87.1
   "@flue/cli": 2.0.3
   "@flue/runtime": 2.0.3
   "@t3-oss/env-core": 0.13.11
@@ -15,6 +16,12 @@ catalog:
   valibot: 1.4.2
   vitest: 4.1.11
 
+overrides:
+  # `@flue/runtime` pins `@earendil-works/pi-ai ^0.83.0`, whose bundled
+  # OpenRouter catalog predates GPT-6 Luna. Force the catalog version that
+  # bundles `openai/gpt-6-luna` so the default model resolves.
+  "@earendil-works/pi-ai": 0.87.1
+
 allowBuilds:
   "@google/genai": false
   core-js-pure: false
@@ -22,4 +29,11 @@ allowBuilds:
   protobufjs: false
 
 minimumReleaseAge: 10080
+# GPT-6 Luna first appears in `@earendil-works/pi-ai` 0.87.1 (and its new
+# `pi-telemetry` peer), released 2026-09-22 — inside the 7-day age window.
+# Exempt the two packages until that release matures so the default model
+# resolves, rather than pinning to a stale catalog (GPT-5.6 Luna).
+minimumReleaseAgeExclude:
+  - "@earendil-works/pi-ai@0.87.1"
+  - "@earendil-works/pi-telemetry@0.87.1"
 saveExact: true

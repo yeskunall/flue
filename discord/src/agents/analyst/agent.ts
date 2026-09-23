@@ -2,10 +2,9 @@
 
 import { useModel, useResponseStart } from "@flue/runtime";
 
+import { DEFAULT_MODEL } from "#/agents/analyst/model.ts";
 import { useDiscordTools } from "#/agents/analyst/tools/discord.ts";
 import { getDiscordReader } from "#/discord/client";
-
-const DEFAULT_MODEL = "openrouter/openai/gpt-6-luna";
 
 export const DISCORD_ANALYST_INSTRUCTIONS = `You are a careful Discord server analyst for one server chosen by trusted application configuration.
 

@@ -19,6 +19,7 @@
     "valibot": "catalog:"
   },
   "devDependencies": {
+    "@earendil-works/pi-ai": "catalog:",
     "@flue/cli": "catalog:",
     "discord-api-types": "catalog:",
     "vitest": "catalog:"
