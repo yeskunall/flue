@@ -1,9 +1,0 @@
-#!/bin/sh
-set -eu
-
-if [ -f discord/.env ]; then
-  exit 0
-fi
-
-umask 077
-exec op inject -i discord/.env.example -o discord/.env </dev/null

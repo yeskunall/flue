@@ -24,6 +24,9 @@ Results depend on the bot's permissions and the [limits](#limits).
 
 ### Configure
 
+Create `discord/.env` by following the repository's
+[setup instructions](../README.md#setup) before running the agent.
+
 #### Discord access
 
 Use a bot installed in the server you want to query. Create or manage the bot in
