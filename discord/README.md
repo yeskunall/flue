@@ -24,6 +24,12 @@ Results depend on the bot's permissions and the [limits](#limits).
 
 ### Configure
 
+Configure credentials from 1Password in the original checkout:
+
+```sh
+umask 077 && op inject -i discord/.env.example -o discord/.env
+```
+
 #### Discord access
 
 Use a bot installed in the server you want to query. Create or manage the bot in
