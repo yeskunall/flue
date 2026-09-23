@@ -24,8 +24,11 @@ Results depend on the bot's permissions and the [limits](#limits).
 
 ### Configure
 
-Create `discord/.env` by following the repository's
-[setup instructions](../README.md#setup) before running the agent.
+Configure credentials from 1Password in the original checkout:
+
+```sh
+umask 077 && op inject -i discord/.env.example -o discord/.env
+```
 
 #### Discord access
 

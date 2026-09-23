@@ -3,20 +3,6 @@
 This pnpm monorepo contains [Flue](https://flueframework.com/) agents and shared
 integration code.
 
-### Setup
-
-Run from the original checkout:
-
-```sh
-pnpm install
-```
-
-Configure credentials from 1Password:
-
-```sh
-umask 077 && op inject -i discord/.env.example -o discord/.env
-```
-
 ### Agents
 
 [Discord](discord/README.md) runs `DiscordAnalyst`, a read-only agent for one
