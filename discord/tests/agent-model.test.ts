@@ -1,3 +1,10 @@
+import { openaiProvider } from "@earendil-works/pi-ai/providers/openai";
+import { openrouterProvider } from "@earendil-works/pi-ai/providers/openrouter";
+import {
+  resetModelsForTests,
+  resolveModel,
+  setProvider,
+} from "@flue/runtime/internal";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const hooks = vi.hoisted(() => ({
@@ -5,7 +12,6 @@ const hooks = vi.hoisted(() => ({
   useResponseStart:
     vi.fn<(callback: () => { timestamp: string; model: string }) => void>(),
   useDiscordTools: vi.fn<(reader: unknown) => void>(),
-  getDiscordReader: vi.fn<() => object>(() => ({})),
 }));
 
 vi.mock("@flue/runtime", () => ({
@@ -18,10 +24,10 @@ vi.mock("#/agents/analyst/tools/discord.ts", () => ({
 }));
 
 vi.mock("#/discord/client", () => ({
-  getDiscordReader: hooks.getDiscordReader,
+  getDiscordReader: () => ({}),
 }));
 
-import { DiscordAnalyst } from "#/agents/analyst/agent.ts";
+import { DEFAULT_MODEL, DiscordAnalyst } from "#/agents/analyst/agent.ts";
 
 const originalModel = process.env.MODEL;
 
@@ -38,51 +44,57 @@ afterEach(() => {
   }
 });
 
-function getResponseMetadata() {
-  const [createMetadata] = hooks.useResponseStart.mock.calls[0] as [
-    () => { timestamp: string; model: string },
-  ];
-  return createMetadata();
-}
-
 describe("Discord analyst model selection", () => {
-  test("uses the configured model for requests and response metadata", () => {
-    process.env.MODEL = "  openrouter/moonshotai/kimi-k2.6  ";
+  test("passes the trimmed MODEL or default model to both runtime hooks", () => {
+    const configuredModel = "openai/gpt-5.5";
+    process.env.MODEL = ` ${configuredModel} `;
 
     DiscordAnalyst();
 
-    expect(hooks.useModel).toHaveBeenCalledWith(
-      "openrouter/moonshotai/kimi-k2.6",
-      { thinkingLevel: "low" },
-    );
-    expect(getResponseMetadata()).toMatchObject({
-      model: "openrouter/moonshotai/kimi-k2.6",
-      timestamp: expect.any(String),
+    delete process.env.MODEL;
+    DiscordAnalyst();
+
+    expect(hooks.useModel.mock.calls).toEqual([
+      [configuredModel, { thinkingLevel: "low" }],
+      [DEFAULT_MODEL, { thinkingLevel: "low" }],
+    ]);
+    expect(
+      hooks.useResponseStart.mock.calls.map(([createMetadata]) =>
+        createMetadata(),
+      ),
+    ).toEqual([
+      {
+        timestamp: expect.any(String),
+        model: configuredModel,
+      },
+      {
+        timestamp: expect.any(String),
+        model: DEFAULT_MODEL,
+      },
+    ]);
+  });
+});
+
+describe("Flue model resolution", () => {
+  beforeEach(() => {
+    resetModelsForTests();
+    setProvider(openrouterProvider());
+    setProvider(openaiProvider());
+  });
+
+  afterEach(resetModelsForTests);
+
+  test("resolves the default model through the installed provider catalog", () => {
+    expect(resolveModel(DEFAULT_MODEL)).toMatchObject({
+      id: "openai/gpt-6-luna",
+      provider: "openrouter",
     });
   });
 
-  test("defaults to GPT-6 Luna when no model is configured", () => {
-    DiscordAnalyst();
-
-    expect(hooks.useModel).toHaveBeenCalledWith(
-      "openrouter/openai/gpt-6-luna",
-      {
-        thinkingLevel: "low",
-      },
-    );
-    expect(getResponseMetadata().model).toBe("openrouter/openai/gpt-6-luna");
-  });
-
-  test("re-reads the selection on each render for the next submission", () => {
-    process.env.MODEL = "openrouter/openai/gpt-6-luna";
-    DiscordAnalyst();
-
-    process.env.MODEL = "openai/gpt-5.5";
-    DiscordAnalyst();
-
-    expect(hooks.useModel.mock.calls.map(([model]) => model)).toEqual([
-      "openrouter/openai/gpt-6-luna",
-      "openai/gpt-5.5",
-    ]);
+  test("resolves a configured OpenAI model through the installed provider catalog", () => {
+    expect(resolveModel("openai/gpt-5.5")).toMatchObject({
+      id: "gpt-5.5",
+      provider: "openai",
+    });
   });
 });

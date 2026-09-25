@@ -17,9 +17,7 @@ catalog:
   vitest: 4.1.11
 
 overrides:
-  # `@flue/runtime` pins `@earendil-works/pi-ai ^0.83.0`, whose bundled
-  # OpenRouter catalog predates GPT-6 Luna. Force the catalog version that
-  # bundles `openai/gpt-6-luna` so the default model resolves.
+  # Flue's pi-ai version does not list GPT-6 Luna.
   "@earendil-works/pi-ai": 0.87.1
 
 allowBuilds:
@@ -29,10 +27,7 @@ allowBuilds:
   protobufjs: false
 
 minimumReleaseAge: 10080
-# GPT-6 Luna first appears in `@earendil-works/pi-ai` 0.87.1 (and its new
-# `pi-telemetry` peer), released 2026-09-22 — inside the 7-day age window.
-# Exempt the two packages until that release matures so the default model
-# resolves, rather than pinning to a stale catalog (GPT-5.6 Luna).
+# Remove these exceptions after 2026-09-29 19:39 UTC.
 minimumReleaseAgeExclude:
   - "@earendil-works/pi-ai@0.87.1"
   - "@earendil-works/pi-telemetry@0.87.1"
