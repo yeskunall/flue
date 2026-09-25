@@ -4,6 +4,7 @@ packages:
 
 catalog:
   "@discordjs/rest": 2.6.3
+  "@earendil-works/pi-ai": 0.87.1
   "@flue/cli": 2.0.3
   "@flue/runtime": 2.0.3
   "@t3-oss/env-core": 0.13.11
@@ -15,6 +16,10 @@ catalog:
   valibot: 1.4.2
   vitest: 4.1.11
 
+overrides:
+  # Flue's pi-ai version does not list GPT-6 Luna.
+  "@earendil-works/pi-ai": 0.87.1
+
 allowBuilds:
   "@google/genai": false
   core-js-pure: false
@@ -22,4 +27,8 @@ allowBuilds:
   protobufjs: false
 
 minimumReleaseAge: 10080
+# Remove these exceptions after 2026-09-29 19:39 UTC.
+minimumReleaseAgeExclude:
+  - "@earendil-works/pi-ai@0.87.1"
+  - "@earendil-works/pi-telemetry@0.87.1"
 saveExact: true
