@@ -31,6 +31,7 @@ export default defineConfig({
     "no-unused-vars": ["error", { reportVarsOnlyUsedAsTypes: true }],
     "no-useless-assignment": "error",
     "no-var": "error",
+    "one-var": ["warn", "never"],
     "prefer-const": "error",
     "prefer-rest-params": "error",
     "prefer-spread": "error",
