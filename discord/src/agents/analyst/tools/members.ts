@@ -30,9 +30,9 @@ export function createMemberLookupTool(
       return JSON.stringify(
         {
           ...summary,
+          matchedCountIsLowerBound: result.status === "partial",
           membersPreview: members.slice(0, 25),
           previewTruncated: members.length > 25,
-          matchedCountIsLowerBound: result.status === "partial",
         },
         null,
         2,

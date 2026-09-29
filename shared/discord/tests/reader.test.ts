@@ -43,24 +43,24 @@ function withBotPermissions(
     if (route === Routes.guildRoles("123456789012345678")) {
       return [
         {
+          color: 0,
+          hoist: false,
           id: "123456789012345678",
+          managed: false,
+          mentionable: false,
           name: "@everyone",
           permissions: "0",
           position: 0,
-          managed: false,
-          color: 0,
-          hoist: false,
-          mentionable: false,
         },
         {
+          color: 0,
+          hoist: false,
           id: "bot-role",
+          managed: true,
+          mentionable: false,
           name: "Campfire bot",
           permissions,
           position: 1,
-          managed: true,
-          color: 0,
-          hoist: false,
-          mentionable: false,
         },
       ];
     }
@@ -79,35 +79,35 @@ describe("DiscordReader server data", () => {
         );
       }
       return {
-        id: "123456789012345678",
-        name: "Campfire",
-        description: "A place to build together",
-        icon: null,
-        owner_id: "owner",
-        features: ["COMMUNITY"],
-        verification_level: 2,
-        premium_tier: 1,
-        premium_subscription_count: 4,
         approximate_member_count: 240,
         approximate_presence_count: 37,
+        description: "A place to build together",
+        features: ["COMMUNITY"],
+        icon: null,
+        id: "123456789012345678",
+        name: "Campfire",
+        owner_id: "owner",
+        premium_subscription_count: 4,
+        premium_tier: 1,
+        verification_level: 2,
       };
     });
 
     await expect(discord.getServerOverview()).resolves.toEqual({
-      source: "Discord REST API v10",
-      retrievedAt: "2026-08-27T12:00:00.000Z",
       facts: {
-        id: "123456789012345678",
-        name: "Campfire",
-        description: "A place to build together",
-        ownerId: "owner",
-        features: ["COMMUNITY"],
-        verificationLevel: 2,
-        premiumTier: 1,
-        premiumSubscriptionCount: 4,
         approximateMemberCount: 240,
         approximatePresenceCount: 37,
+        description: "A place to build together",
+        features: ["COMMUNITY"],
+        id: "123456789012345678",
+        name: "Campfire",
+        ownerId: "owner",
+        premiumSubscriptionCount: 4,
+        premiumTier: 1,
+        verificationLevel: 2,
       },
+      retrievedAt: "2026-08-27T12:00:00.000Z",
+      source: "Discord REST API v10",
       unavailable: [],
     });
   });
@@ -118,96 +118,96 @@ describe("DiscordReader server data", () => {
         return [
           {
             id: "category",
-            type: 4,
             name: "Community",
-            position: 0,
             permission_overwrites: [],
+            position: 0,
+            type: 4,
           },
           {
             id: "general",
-            type: 0,
             name: "general",
-            position: 1,
-            parent_id: "category",
-            topic: "Say hello",
             nsfw: false,
+            parent_id: "category",
             permission_overwrites: [],
+            position: 1,
+            topic: "Say hello",
+            type: 0,
           },
         ];
       }
       if (route === Routes.guildRoles("123456789012345678")) {
         return [
           {
+            color: 0,
+            hoist: false,
             id: "123456789012345678",
+            managed: false,
+            mentionable: false,
             name: "@everyone",
             permissions: "0",
             position: 0,
-            managed: false,
-            color: 0,
-            hoist: false,
-            mentionable: false,
           },
         ];
       }
       if (route === Routes.guildActiveThreads("123456789012345678")) {
         return {
+          members: [],
           threads: [
             {
               id: "thread",
-              type: 11,
-              name: "Launch notes",
-              parent_id: "general",
-              owner_id: "owner",
-              message_count: 12,
               member_count: 4,
+              message_count: 12,
+              name: "Launch notes",
+              owner_id: "owner",
+              parent_id: "general",
               thread_metadata: {
+                archive_timestamp: "2026-08-27T10:00:00.000Z",
                 archived: false,
                 auto_archive_duration: 1440,
-                archive_timestamp: "2026-08-27T10:00:00.000Z",
                 locked: false,
               },
+              type: 11,
             },
           ],
-          members: [],
         };
       }
       throw new Error(`Unexpected route: ${route}`);
     });
 
     await expect(discord.getServerStructure()).resolves.toMatchObject({
-      source: "Discord REST API v10",
-      retrievedAt: "2026-08-27T12:00:00.000Z",
+      calculations: {
+        activeThreadCount: 1,
+        categoryCount: 1,
+        channelCount: 1,
+        permissionRiskIndicators: [],
+        roleCount: 1,
+      },
       facts: {
+        activeThreads: [
+          {
+            id: "thread",
+            memberCount: 4,
+            messageCount: 12,
+            name: "Launch notes",
+            parentId: "general",
+          },
+        ],
         categories: [{ id: "category", name: "Community", position: 0 }],
         channels: [
           {
+            categoryId: "category",
             id: "general",
             name: "general",
-            type: "GuildText",
-            categoryId: "category",
             topic: "Say hello",
+            type: "GuildText",
           },
         ],
         roles: [
           { id: "123456789012345678", name: "@everyone", permissions: "0" },
         ],
-        activeThreads: [
-          {
-            id: "thread",
-            name: "Launch notes",
-            parentId: "general",
-            messageCount: 12,
-            memberCount: 4,
-          },
-        ],
       },
-      calculations: {
-        categoryCount: 1,
-        channelCount: 1,
-        roleCount: 1,
-        activeThreadCount: 1,
-        permissionRiskIndicators: [],
-      },
+      retrievedAt: "2026-08-27T12:00:00.000Z",
+      source: "Discord REST API v10",
       unavailable: [],
     });
   });
@@ -220,25 +220,25 @@ describe("DiscordReader server data", () => {
         || route === Routes.guildActiveThreads("123456789012345678")
       ) {
         throw Object.assign(new Error("Missing Access"), {
-          status: 403,
           code: 50_001,
+          status: 403,
         });
       }
       throw new Error(`Unexpected route: ${route}`);
     });
 
     await expect(discord.getServerStructure()).resolves.toMatchObject({
-      facts: {
-        categories: null,
-        channels: null,
-        roles: null,
-        activeThreads: null,
-      },
       calculations: {
+        activeThreadCount: null,
         categoryCount: null,
         channelCount: null,
         roleCount: null,
-        activeThreadCount: null,
+      },
+      facts: {
+        activeThreads: null,
+        categories: null,
+        channels: null,
+        roles: null,
       },
       unavailable: [
         { scope: "channels" },
@@ -259,17 +259,17 @@ describe("DiscordReader message scans", () => {
             return [
               {
                 id: "text",
-                type: 0,
                 name: "general",
-                position: 0,
                 permission_overwrites: [],
+                position: 0,
+                type: 0,
               },
               {
                 id: "category",
-                type: 4,
                 name: "Community",
-                position: 1,
                 permission_overwrites: [],
+                position: 1,
+                type: 4,
               },
             ];
           }
@@ -300,31 +300,31 @@ describe("DiscordReader message scans", () => {
     );
 
     await expect(discord.getMessageActivity(7)).resolves.toMatchObject({
-      source: "Discord REST API v10",
-      observationPeriod: {
-        start: "2026-08-20T12:00:00.000Z",
-        end: "2026-08-27T12:00:00.000Z",
-      },
       calculations: {
-        visibleMessageCount: 3,
+        cappedChannels: ["general"],
         ranking: [
           {
             channelId: "text",
             channelName: "general",
-            visibleMessageCount: 3,
             countIsLowerBound: true,
+            visibleMessageCount: 3,
           },
         ],
-        cappedChannels: ["general"],
+        visibleMessageCount: 3,
+      },
+      observationPeriod: {
+        end: "2026-08-27T12:00:00.000Z",
+        start: "2026-08-20T12:00:00.000Z",
       },
       scan: {
         eligibleChannelCount: 1,
-        scannedChannelCount: 1,
         maxChannels: 10,
         maxMessagesPerChannel: 3,
         maxTotalMessages: 10,
+        scannedChannelCount: 1,
         truncated: true,
       },
+      source: "Discord REST API v10",
       unavailable: [],
     });
   });
@@ -336,25 +336,25 @@ describe("DiscordReader message scans", () => {
           return [
             {
               id: "visible",
-              type: 0,
               name: "visible",
-              position: 0,
               permission_overwrites: [],
+              position: 0,
+              type: 0,
             },
             {
               id: "private",
-              type: 0,
               name: "private",
-              position: 1,
               permission_overwrites: [],
+              position: 1,
+              type: 0,
             },
           ];
         }
         if (route === Routes.channelMessages("visible")) return [];
         if (route === Routes.channelMessages("private")) {
           throw Object.assign(new Error("Missing Permissions"), {
-            status: 403,
             code: 50_013,
+            status: 403,
           });
         }
         throw new Error(`Unexpected route: ${route}`);
@@ -373,9 +373,9 @@ describe("DiscordReader message scans", () => {
       },
       unavailable: [
         {
-          scope: "channel:private",
           reason: "Missing View Channel or Read Message History permission.",
           requiredPermissions: ["View Channel", "Read Message History"],
+          scope: "channel:private",
         },
       ],
     });
@@ -390,10 +390,10 @@ describe("DiscordReader message scans", () => {
             return [
               {
                 id: "history-blocked",
-                type: 0,
                 name: "history-blocked",
-                position: 0,
                 permission_overwrites: [],
+                position: 0,
+                type: 0,
               },
             ];
           }
@@ -409,7 +409,6 @@ describe("DiscordReader message scans", () => {
 
     await expect(discord.getMessageActivity(7)).resolves.toMatchObject({
       calculations: {
-        visibleMessageCount: 0,
         ranking: [],
         unavailableChannels: [
           {
@@ -418,12 +417,13 @@ describe("DiscordReader message scans", () => {
             reason: "Missing Read Message History permission.",
           },
         ],
+        visibleMessageCount: 0,
       },
       unavailable: [
         {
-          scope: "channel:history-blocked",
           reason: "Missing Read Message History permission.",
           requiredPermissions: ["Read Message History"],
+          scope: "channel:history-blocked",
         },
       ],
     });
@@ -439,10 +439,10 @@ describe("DiscordReader message scans", () => {
             return [
               {
                 id: "admin-visible",
-                type: 0,
                 name: "admin-visible",
-                position: 0,
                 permission_overwrites: [],
+                position: 0,
+                type: 0,
               },
             ];
           }
@@ -462,8 +462,8 @@ describe("DiscordReader message scans", () => {
       {
         channelId: "admin-visible",
         channelName: "admin-visible",
-        visibleMessageCount: 1,
         countIsLowerBound: false,
+        visibleMessageCount: 1,
       },
     ]);
     expect(result.unavailable).toEqual([]);
@@ -477,17 +477,17 @@ describe("DiscordReader message scans", () => {
           return [
             {
               id: "empty",
-              type: 0,
               name: "empty",
-              position: 0,
               permission_overwrites: [],
+              position: 0,
+              type: 0,
             },
             {
               id: "active",
-              type: 0,
               name: "active",
-              position: 1,
               permission_overwrites: [],
+              position: 1,
+              type: 0,
             },
           ];
         }
@@ -502,11 +502,11 @@ describe("DiscordReader message scans", () => {
         throw new Error(`Unexpected route: ${route}`);
       }),
       {
+        concurrency: 2,
         maxChannels: 2,
         maxMessagesPerChannel: 2,
         maxTotalMessages: 2,
         pageSize: 2,
-        concurrency: 2,
       },
     );
 
@@ -536,10 +536,10 @@ describe("DiscordReader message scans", () => {
     );
 
     await expect(discord.getMessageActivity(7)).resolves.toMatchObject({
-      retrievedAt: "2026-08-27T12:00:05.000Z",
       observationPeriod: {
         end: "2026-08-27T12:00:00.000Z",
       },
+      retrievedAt: "2026-08-27T12:00:05.000Z",
     });
   });
 
@@ -552,17 +552,17 @@ describe("DiscordReader message scans", () => {
             return [
               {
                 id: "old",
-                type: 0,
                 name: "old-news",
-                position: 0,
                 permission_overwrites: [],
+                position: 0,
+                type: 0,
               },
               {
                 id: "private",
-                type: 0,
                 name: "private",
-                position: 1,
                 permission_overwrites: [],
+                position: 1,
+                type: 0,
               },
             ];
           }
@@ -576,8 +576,8 @@ describe("DiscordReader message scans", () => {
           }
           if (route === Routes.channelMessages("private")) {
             throw Object.assign(new Error("Missing Access"), {
-              status: 403,
               code: 50_001,
+              status: 403,
             });
           }
           throw new Error(`Unexpected route: ${route}`);
@@ -586,17 +586,13 @@ describe("DiscordReader message scans", () => {
     );
 
     await expect(discord.getInactiveChannels(30)).resolves.toMatchObject({
-      observationPeriod: {
-        start: "2026-07-28T12:00:00.000Z",
-        end: "2026-08-27T12:00:00.000Z",
-      },
       calculations: {
         inactive: [
           {
             channelId: "old",
             channelName: "old-news",
-            latestVisibleMessageAt: "2026-06-01T12:00:00.000Z",
             inactiveForDays: 87,
+            latestVisibleMessageAt: "2026-06-01T12:00:00.000Z",
           },
         ],
         unavailableChannels: [
@@ -606,6 +602,10 @@ describe("DiscordReader message scans", () => {
             reason: "Missing View Channel or Read Message History permission.",
           },
         ],
+      },
+      observationPeriod: {
+        end: "2026-08-27T12:00:00.000Z",
+        start: "2026-07-28T12:00:00.000Z",
       },
     });
   });
@@ -622,19 +622,19 @@ describe("DiscordReader optional resources", () => {
       }
       return [
         {
-          id: "event",
-          guild_id: "123456789012345678",
           channel_id: null,
           creator_id: "creator",
-          name: "Town hall",
           description: "Monthly update",
-          scheduled_start_time: "2026-08-29T17:00:00.000Z",
-          scheduled_end_time: "2026-08-29T18:00:00.000Z",
-          privacy_level: 2,
-          status: 1,
-          entity_type: 3,
           entity_id: null,
           entity_metadata: { location: "Online" },
+          entity_type: 3,
+          guild_id: "123456789012345678",
+          id: "event",
+          name: "Town hall",
+          privacy_level: 2,
+          scheduled_end_time: "2026-08-29T18:00:00.000Z",
+          scheduled_start_time: "2026-08-29T17:00:00.000Z",
+          status: 1,
           user_count: 14,
         },
       ];
@@ -644,13 +644,13 @@ describe("DiscordReader optional resources", () => {
       facts: {
         events: [
           {
-            id: "event",
-            name: "Town hall",
             description: "Monthly update",
-            scheduledStartTime: "2026-08-29T17:00:00.000Z",
-            scheduledEndTime: "2026-08-29T18:00:00.000Z",
-            location: "Online",
+            id: "event",
             interestedUserCount: 14,
+            location: "Online",
+            name: "Town hall",
+            scheduledEndTime: "2026-08-29T18:00:00.000Z",
+            scheduledStartTime: "2026-08-29T17:00:00.000Z",
           },
         ],
       },
@@ -662,16 +662,16 @@ describe("DiscordReader optional resources", () => {
     const discord = reader(async route => {
       if (route === Routes.guildScheduledEvents("123456789012345678")) {
         throw Object.assign(new Error("Missing Access"), {
-          status: 403,
           code: 50_001,
+          status: 403,
         });
       }
       throw new Error(`Unexpected route: ${route}`);
     });
 
     await expect(discord.getUpcomingEvents()).resolves.toMatchObject({
-      facts: { events: null },
       calculations: { upcomingEventCount: null },
+      facts: { events: null },
       unavailable: [{ scope: "scheduled-events" }],
     });
   });
@@ -692,12 +692,12 @@ describe("DiscordReader optional resources", () => {
       return {
         audit_log_entries: [
           {
-            id: entryId,
             action_type: 22,
-            user_id: "moderator",
-            target_id: "member",
-            reason: "Repeated spam",
             changes: [],
+            id: entryId,
+            reason: "Repeated spam",
+            target_id: "member",
+            user_id: "moderator",
           },
         ],
         users: [{ id: "moderator", username: "Ada" }],
@@ -705,23 +705,23 @@ describe("DiscordReader optional resources", () => {
     });
 
     await expect(discord.getRecentAuditLog(7)).resolves.toMatchObject({
-      facts: {
-        entries: [
-          {
-            id: entryId,
-            occurredAt,
-            actionType: 22,
-            actionName: "MemberBanAdd",
-            actorId: "moderator",
-            actorUsername: "Ada",
-            targetId: "member",
-            reason: "Repeated spam",
-          },
-        ],
-      },
       calculations: {
         actionCount: 1,
         actionsByType: { MemberBanAdd: 1 },
+      },
+      facts: {
+        entries: [
+          {
+            actionName: "MemberBanAdd",
+            actionType: 22,
+            actorId: "moderator",
+            actorUsername: "Ada",
+            id: entryId,
+            occurredAt,
+            reason: "Repeated spam",
+            targetId: "member",
+          },
+        ],
       },
       scan: {
         fetchedEntryCount: 1,
@@ -735,31 +735,31 @@ describe("DiscordReader optional resources", () => {
     const discord = reader(async route => {
       if (route === Routes.guildAuditLog("123456789012345678")) {
         throw Object.assign(new Error("Missing Permissions"), {
-          status: 403,
           code: 50_013,
+          status: 403,
         });
       }
       throw new Error(`Unexpected route: ${route}`);
     });
 
     await expect(discord.getRecentAuditLog(7)).resolves.toEqual({
-      source: "Discord REST API v10",
-      retrievedAt: "2026-08-27T12:00:00.000Z",
-      observationPeriod: {
-        start: "2026-08-20T12:00:00.000Z",
-        end: "2026-08-27T12:00:00.000Z",
-      },
       facts: { entries: null },
+      observationPeriod: {
+        end: "2026-08-27T12:00:00.000Z",
+        start: "2026-08-20T12:00:00.000Z",
+      },
+      retrievedAt: "2026-08-27T12:00:00.000Z",
       scan: {
         fetchedEntryCount: 0,
         maxEntries: 300,
         truncated: false,
       },
+      source: "Discord REST API v10",
       unavailable: [
         {
-          scope: "audit-log",
           reason: "Discord did not allow this bot to view the guild audit log.",
           requiredPermissions: ["View Audit Log"],
+          scope: "audit-log",
         },
       ],
     });

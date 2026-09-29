@@ -26,20 +26,20 @@ const roles = [
 
 function member(index: number, roleIds: string[], bot = false) {
   return {
-    user: {
-      id: String(200000000000000000n + BigInt(index)),
-      username: `member${index}`,
-      global_name: `Member ${index}`,
-      discriminator: "0",
-      avatar: null,
-      bot,
-    },
+    deaf: false,
+    flags: 0,
+    joined_at: "2026-01-01T00:00:00Z",
+    mute: false,
     nick: index === 1 ? "First member" : null,
     roles: roleIds,
-    joined_at: "2026-01-01T00:00:00Z",
-    deaf: false,
-    mute: false,
-    flags: 0,
+    user: {
+      avatar: null,
+      bot,
+      discriminator: "0",
+      global_name: `Member ${index}`,
+      id: String(200000000000000000n + BigInt(index)),
+      username: `member${index}`,
+    },
   };
 }
 
@@ -68,8 +68,8 @@ describe("member role filters", () => {
       filter: {
         allOf: [roles[1], roles[2]],
         anyOf: [roles[1], roles[3]],
-        noneOf: [],
         memberType: "all",
+        noneOf: [],
       },
       issues: [],
     });
@@ -79,7 +79,7 @@ describe("member role filters", () => {
     const result = resolveMemberRoles(roles, { noneOf: ["Verifed"] });
     expect(result.filter).toBeNull();
     expect(result.issues).toEqual([
-      { role: "Verifed", reason: "unknown_role", candidates: [] },
+      { candidates: [], reason: "unknown_role", role: "Verifed" },
     ]);
   });
 
@@ -92,7 +92,7 @@ describe("member role filters", () => {
       );
       expect(result.filter).toBeNull();
       expect(result.issues).toEqual([
-        { role: reference, reason: "unknown_role", candidates: [] },
+        { candidates: [], reason: "unknown_role", role: reference },
       ]);
     },
   );
@@ -106,9 +106,9 @@ describe("member role filters", () => {
       resolveMemberRoles(duplicates, { allOf: ["Verified"] }).issues,
     ).toEqual([
       {
-        role: "Verified",
-        reason: "ambiguous_role",
         candidates: [roles[1], duplicates[4]],
+        reason: "ambiguous_role",
+        role: "Verified",
       },
     ]);
     expect(
@@ -162,7 +162,7 @@ describe("member role filters", () => {
     (input, roleIds, bot, expected) => {
       const { filter } = resolveMemberRoles(roles, input);
       expect(filter).not.toBeNull();
-      expect(matchesMemberRoles({ roleIds, isBot: bot }, filter!, GUILD)).toBe(
+      expect(matchesMemberRoles({ isBot: bot, roleIds }, filter!, GUILD)).toBe(
         expected,
       );
     },
@@ -203,8 +203,8 @@ describe("REST member lookup", () => {
       GUILD,
       { allOf: ["Verified"], noneOf: ["Muted"] },
       {
-        pageSize: 2,
         now: () => NOW,
+        pageSize: 2,
       },
     );
 
@@ -219,18 +219,18 @@ describe("REST member lookup", () => {
     expect(result.retrievedAt).toBe("2026-09-01T12:00:00.000Z");
     expect(result.members).toEqual([
       {
-        id: "200000000000000001",
-        username: "member1",
         displayName: "First member",
+        id: "200000000000000001",
         isBot: false,
         roleIds: [VERIFIED],
+        username: "member1",
       },
       {
-        id: "200000000000000004",
-        username: "member4",
         displayName: "Member 4",
+        id: "200000000000000004",
         isBot: false,
         roleIds: [VERIFIED, STAFF],
+        username: "member4",
       },
     ]);
   });
@@ -266,7 +266,7 @@ describe("REST member lookup", () => {
   test("reports the Server Members intent requirement rather than zero on a denied list", async () => {
     const result = await findMembersByRoles(
       transport(async () => {
-        throw { status: 403, code: 50001 };
+        throw { code: 50001, status: 403 };
       }),
       GUILD,
       { allOf: ["Verified"] },
@@ -302,7 +302,7 @@ describe("REST member lookup", () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         if (!options?.query?.has("after")) return [member(1, [VERIFIED])];
-        throw { status: 403, code: 50001 };
+        throw { code: 50001, status: 403 };
       }),
       GUILD,
       { allOf: ["Verified"] },
@@ -324,7 +324,7 @@ describe("REST member lookup", () => {
       }),
       GUILD,
       { allOf: ["Verified"] },
-      { pageSize: 2, maxMembers: 3 },
+      { maxMembers: 3, pageSize: 2 },
     );
     expect(queries).toEqual(["limit=2", "limit=1&after=200000000000000002"]);
     expect(result.status).toBe("partial");
@@ -387,8 +387,8 @@ describe("REST member lookup", () => {
       findMembersByRoles(
         transport(async () => [
           {
-            user: member(1, []).user,
             roles: null,
+            user: member(1, []).user,
           },
         ]),
         GUILD,
@@ -401,7 +401,7 @@ describe("REST member lookup", () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         if (!options?.query?.has("after")) return [member(1, [VERIFIED])];
-        return [{ user: member(2, []).user, roles: null }];
+        return [{ roles: null, user: member(2, []).user }];
       }),
       GUILD,
       { allOf: ["Verified"] },
