@@ -1,0 +1,35 @@
+import { defineConfig } from "oxfmt";
+
+export default defineConfig({
+  arrowParens: "avoid",
+  bracketSpacing: true,
+  endOfLine: "lf",
+  experimentalOperatorPosition: "start",
+  ignorePatterns: [
+    "**/.astro/**",
+    "**/.vite/**",
+    "**/dist/**",
+    "**/node_modules/**",
+  ],
+  insertFinalNewline: true,
+  overrides: [
+    {
+      files: ["**/*.md"],
+      options: {
+        proseWrap: "always",
+      },
+    },
+  ],
+  printWidth: 80,
+  quoteProps: "consistent",
+  semi: true,
+  singleQuote: false,
+  sortImports: {
+    internalPattern: ["#/"],
+    sortSideEffects: false,
+  },
+  sortPackageJson: true,
+  tabWidth: 2,
+  trailingComma: "all",
+  useTabs: false,
+});

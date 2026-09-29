@@ -1,30 +1,32 @@
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "categories": {
-    "correctness": "error",
-    "suspicious": "error"
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  categories: {
+    correctness: "error",
+    suspicious: "error",
+    style: "warn",
   },
-  "ignorePatterns": ["**/dist/**"],
-  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
-  "rules": {
+  ignorePatterns: ["**/dist/**"],
+  plugins: ["typescript", "unicorn", "oxc", "import", "vitest"],
+  rules: {
     "no-case-declarations": "error",
     "no-constant-binary-expression": [
       "error",
-      { "checkRelationalComparisons": false }
+      { checkRelationalComparisons: false },
     ],
     "no-empty": "error",
     "no-fallthrough": "error",
     "no-irregular-whitespace": [
       "error",
       {
-        "skipJSXText": false,
-        "skipRegExps": false,
-        "skipTemplates": false
-      }
+        skipJSXText: false,
+        skipRegExps: false,
+        skipTemplates: false,
+      },
     ],
     "no-prototype-builtins": "error",
     "no-regex-spaces": "error",
-    "no-unused-vars": ["error", { "reportVarsOnlyUsedAsTypes": true }],
+    "no-unused-vars": ["error", { reportVarsOnlyUsedAsTypes: true }],
     "no-var": "error",
     "prefer-const": "error",
     "prefer-rest-params": "error",
@@ -38,6 +40,6 @@
     "typescript/no-unsafe-function-type": "error",
     "no-useless-assignment": "error",
     "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
-    "vitest/valid-expect": ["warn", { "maxArgs": 2 }]
-  }
-}
+    "vitest/valid-expect": ["warn", { maxArgs: 2 }],
+  },
+});

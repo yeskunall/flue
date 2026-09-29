@@ -44,7 +44,20 @@ jobs:
         run: pnpm format:check
 
       - name: Lint
-        run: pnpm lint
+        id: lint
+        run: pnpm lint --format github
+
+      - name: Save full lint report
+        if: ${{ always() && steps.lint.outcome == 'failure' }}
+        run: pnpm exec oxlint --format json . > "$RUNNER_TEMP/oxlint-results.json" || test -s "$RUNNER_TEMP/oxlint-results.json"
+
+      - name: Upload full lint report
+        if: ${{ always() && steps.lint.outcome == 'failure' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: oxlint-results
+          path: ${{ runner.temp }}/oxlint-results.json
+          retention-days: 7
 
       - name: Typecheck
         run: pnpm typecheck
