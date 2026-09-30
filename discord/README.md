@@ -25,39 +25,25 @@ Results depend on the bot's permissions and the [limits](#limits).
 
 ### Configure
 
-Configure credentials from 1Password in the original checkout:
+Add `OPENROUTER_API_KEY` to the `Employee/Flue` item in 1Password, then generate
+`discord/.env` in the original checkout:
 
 ```sh
 umask 077 && op inject -i discord/.env.example -o discord/.env
 ```
 
-#### LLM provider and model
+#### Model
 
-The default model is GPT-6 Luna via OpenRouter (`openrouter/openai/gpt-6-luna`).
-Set `MODEL` in `discord/.env`, or prefix a command to select a model for that
-invocation. Flue accepts `provider/model` IDs; OpenRouter IDs include the
-upstream provider and model after `openrouter/`.
-
-Configure the API key for each provider you plan to use:
-
-| Provider   | Model ID example               | API key              |
-| ---------- | ------------------------------ | -------------------- |
-| OpenRouter | `openrouter/openai/gpt-6-luna` | `OPENROUTER_API_KEY` |
-| OpenAI     | `openai/gpt-5.5`               | `OPENAI_API_KEY`     |
-| Anthropic  | `anthropic/claude-haiku-4-5`   | `ANTHROPIC_API_KEY`  |
-
-For example, these commands keep using the same `discord-cli` conversation while
-changing the model for the next submission:
+The default is `openrouter/openai/gpt-6-luna`. Set `MODEL` in `discord/.env` or
+for one command to use another model:
 
 ```sh
-MODEL=openrouter/openai/gpt-6-luna pnpm ask:continue --message "Summarize the server."
 MODEL=openai/gpt-5.5 pnpm ask:continue --message "Check the active threads."
-MODEL=openrouter/moonshotai/kimi-k2.6 pnpm ask:continue --message "Count members by role."
 ```
 
-A submission uses one model; changing the setting does not switch a response
-already in progress. Choose models that support tool calling for Discord
-queries.
+Supply the chosen provider's key (`OPENAI_API_KEY` in this example) and use a
+model that supports tool calling. A new `MODEL` takes effect on the next
+submission.
 
 #### Discord access
 
