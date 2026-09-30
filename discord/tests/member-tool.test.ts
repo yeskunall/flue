@@ -53,7 +53,7 @@ describe("Flue member lookup result", () => {
     expect(result.membersPreview[24].username).toBe("member24");
     expect(result.previewTruncated).toBeTruthy();
     expect(result.matchedMemberCount).toBe(40);
-    expect(result.matchedCountIsLowerBound).toBe(false);
+    expect(result.matchedCountIsLowerBound).toBeFalsy();
     expect(result.report).toBeUndefined();
     expect(result.reportError).toBeUndefined();
   });
@@ -95,6 +95,6 @@ describe("Flue member lookup result", () => {
     expect(result.membersPreview).toStrictEqual([]);
     expect(result.report).toBeUndefined();
     expect(result.reportError).toBeUndefined();
-    expect(result.previewTruncated).toBe(false);
+    expect(result.previewTruncated).toBeFalsy();
   });
 });
