@@ -17,6 +17,10 @@ export default defineConfig({
       ],
       rules: { "unicorn/no-null": "off" },
     },
+    {
+      files: ["**/*.test.ts"],
+      rules: { "no-magic-numbers": "off" },
+    },
   ],
   plugins: ["typescript", "unicorn", "oxc", "import", "vitest"],
   rules: {
@@ -38,6 +42,7 @@ export default defineConfig({
         skipTemplates: false,
       },
     ],
+    "no-magic-numbers": ["warn", { ignore: [0, 1, 2] }],
     "no-prototype-builtins": "error",
     "no-regex-spaces": "error",
     "no-unused-vars": ["error", { reportVarsOnlyUsedAsTypes: true }],
