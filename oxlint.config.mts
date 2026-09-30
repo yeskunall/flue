@@ -42,6 +42,7 @@ export default defineConfig({
     "typescript/no-namespace": "error",
     "typescript/no-require-imports": "error",
     "typescript/no-unsafe-function-type": "error",
+    "vitest/no-importing-vitest-globals": "off",
     "vitest/prefer-lowercase-title": [
       "warn",
       { allowedPrefixes: ["DiscordReader", "Flue", "REST"] },
