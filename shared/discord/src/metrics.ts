@@ -200,23 +200,22 @@ const calculateMessageActivity = (
         channelName: scan.channelName,
         reason: scan.reason,
       });
-      continue;
+    } else {
+      const count = scan.messages.reduce((total, message) => {
+        const timestamp = Date.parse(message.timestamp);
+        return timestamp >= start && timestamp <= end ? total + 1 : total;
+      }, 0);
+      visibleMessageCount += count;
+      if (scan.status === "capped") {
+        cappedChannels.push(scan.channelName);
+      }
+      ranking.push({
+        channelId: scan.channelId,
+        channelName: scan.channelName,
+        countIsLowerBound: scan.status === "capped",
+        visibleMessageCount: count,
+      });
     }
-
-    const count = scan.messages.reduce((total, message) => {
-      const timestamp = Date.parse(message.timestamp);
-      return timestamp >= start && timestamp <= end ? total + 1 : total;
-    }, 0);
-    visibleMessageCount += count;
-    if (scan.status === "capped") {
-      cappedChannels.push(scan.channelName);
-    }
-    ranking.push({
-      channelId: scan.channelId,
-      channelName: scan.channelName,
-      countIsLowerBound: scan.status === "capped",
-      visibleMessageCount: count,
-    });
   }
 
   ranking.sort(
@@ -250,29 +249,26 @@ const calculateInactiveChannels = (
         channelName: observation.channelName,
         reason: observation.reason,
       });
-      continue;
-    }
-    if (observation.latestVisibleMessageAt === null) {
+    } else if (observation.latestVisibleMessageAt === null) {
       noVisibleMessages.push({
         channelId: observation.channelId,
         channelName: observation.channelName,
       });
-      continue;
-    }
-
-    const inactiveForDays = Math.floor(
-      (observedAt - Date.parse(observation.latestVisibleMessageAt))
-        / MILLISECONDS_PER_DAY,
-    );
-    if (inactiveForDays >= options.thresholdDays) {
-      inactive.push({
-        channelId: observation.channelId,
-        channelName: observation.channelName,
-        inactiveForDays,
-        latestVisibleMessageAt: observation.latestVisibleMessageAt,
-      });
     } else {
-      activeChannelCount += 1;
+      const inactiveForDays = Math.floor(
+        (observedAt - Date.parse(observation.latestVisibleMessageAt))
+          / MILLISECONDS_PER_DAY,
+      );
+      if (inactiveForDays >= options.thresholdDays) {
+        inactive.push({
+          channelId: observation.channelId,
+          channelName: observation.channelName,
+          inactiveForDays,
+          latestVisibleMessageAt: observation.latestVisibleMessageAt,
+        });
+      } else {
+        activeChannelCount += 1;
+      }
     }
   }
 
@@ -298,30 +294,28 @@ const assessPermissionRisks = (input: {
   const risks: PermissionRisk[] = [];
 
   for (const role of input.roles) {
-    if (role.managed) {
-      continue;
-    }
-    const permissions = BigInt(role.permissions);
-    for (const riskPermission of ROLE_RISK_PERMISSIONS) {
-      if (!hasPermission(permissions, riskPermission.flag)) {
-        continue;
+    if (!role.managed) {
+      const permissions = BigInt(role.permissions);
+      for (const riskPermission of ROLE_RISK_PERMISSIONS) {
+        if (hasPermission(permissions, riskPermission.flag)) {
+          const isEveryone = role.id === input.guildId;
+          risks.push({
+            explanation: isEveryone
+              ? "The @everyone role grants a high-impact permission to every server member."
+              : riskPermission.name === "Administrator"
+                ? "This assignable role bypasses channel-specific permission checks. Review who can receive it."
+                : "This assignable role grants a high-impact server permission. Review who can receive it.",
+            permission: riskPermission.name,
+            severity:
+              isEveryone && riskPermission.severity === "high"
+                ? "high"
+                : riskPermission.severity,
+            subjectId: role.id,
+            subjectName: role.name,
+            subjectType: "role",
+          });
+        }
       }
-      const isEveryone = role.id === input.guildId;
-      risks.push({
-        explanation: isEveryone
-          ? "The @everyone role grants a high-impact permission to every server member."
-          : riskPermission.name === "Administrator"
-            ? "This assignable role bypasses channel-specific permission checks. Review who can receive it."
-            : "This assignable role grants a high-impact server permission. Review who can receive it.",
-        permission: riskPermission.name,
-        severity:
-          isEveryone && riskPermission.severity === "high"
-            ? "high"
-            : riskPermission.severity,
-        subjectId: role.id,
-        subjectName: role.name,
-        subjectType: "role",
-      });
     }
   }
 
@@ -329,23 +323,21 @@ const assessPermissionRisks = (input: {
     const everyoneOverwrite = channel.permission_overwrites?.find(
       overwrite => overwrite.type === 0 && overwrite.id === input.guildId,
     );
-    if (!everyoneOverwrite) {
-      continue;
-    }
-    const allowed = BigInt(everyoneOverwrite.allow);
-    for (const riskPermission of CHANNEL_RISK_PERMISSIONS) {
-      if (!hasPermission(allowed, riskPermission.flag)) {
-        continue;
+    if (everyoneOverwrite) {
+      const allowed = BigInt(everyoneOverwrite.allow);
+      for (const riskPermission of CHANNEL_RISK_PERMISSIONS) {
+        if (hasPermission(allowed, riskPermission.flag)) {
+          risks.push({
+            explanation:
+              "The @everyone channel override grants a high-impact permission to every server member.",
+            permission: riskPermission.name,
+            severity: riskPermission.severity,
+            subjectId: channel.id,
+            subjectName: channel.name,
+            subjectType: "channel",
+          });
+        }
       }
-      risks.push({
-        explanation:
-          "The @everyone channel override grants a high-impact permission to every server member.",
-        permission: riskPermission.name,
-        severity: riskPermission.severity,
-        subjectId: channel.id,
-        subjectName: channel.name,
-        subjectType: "channel",
-      });
     }
   }
 

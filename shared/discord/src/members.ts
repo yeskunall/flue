@@ -293,21 +293,20 @@ const findMembersByRoles = async (
         || new Set(ids).size !== ids.length
         || ids.some(id => after !== undefined && BigInt(id) <= BigInt(after));
       for (const value of page.slice(0, limit)) {
-        if (seenMembers.has(value.user.id)) {
-          continue;
-        }
-        seenMembers.add(value.user.id);
-        scannedMemberCount++;
-        const member: MatchedMember = {
-          displayName:
-            value.nick ?? value.user.global_name ?? value.user.username,
-          id: value.user.id,
-          isBot: value.user.bot,
-          roleIds: value.roles,
-          username: value.user.username,
-        };
-        if (matchesMemberRoles(member, filter, guildId)) {
-          members.push(member);
+        if (!seenMembers.has(value.user.id)) {
+          seenMembers.add(value.user.id);
+          scannedMemberCount++;
+          const member: MatchedMember = {
+            displayName:
+              value.nick ?? value.user.global_name ?? value.user.username,
+            id: value.user.id,
+            isBot: value.user.bot,
+            roleIds: value.roles,
+            username: value.user.username,
+          };
+          if (matchesMemberRoles(member, filter, guildId)) {
+            members.push(member);
+          }
         }
       }
       if (invalidPage) {
