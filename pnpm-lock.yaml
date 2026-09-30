@@ -1644,8 +1644,8 @@ packages:
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
 
-  js-yaml@5.4.0:
-    resolution: {integrity: sha512-jE7vUJIebKzYQI5xu4co5CRBDlDEYnHrdzsxs4O2giCz4v2SbVMYKpmt1D9L38OKQAeCWmrOTRiCV93u0UkaJA==}
+  js-yaml@5.4.2:
+    resolution: {integrity: sha512-m+aqu+LwO1O6sIopafj8HUVl5aawITwZQe/yHpMCKjaWBaA/d07B/QdMb3529REftiU+RMMHL3Vlsw3hON7vWg==}
     hasBin: true
 
   jsesc@3.1.0:
@@ -2849,7 +2849,7 @@ snapshots:
       '@modelcontextprotocol/client': 2.0.0
       '@valibot/to-json-schema': 1.7.1(valibot@1.4.2(typescript@7.0.2))
       hono: 4.13.4
-      js-yaml: 5.4.0
+      js-yaml: 5.4.2
       ulidx: 2.4.1
       valibot: 1.4.2(typescript@7.0.2)
     transitivePeerDependencies:
@@ -3789,7 +3789,7 @@ snapshots:
 
   js-tokens@10.0.0: {}
 
-  js-yaml@5.4.0:
+  js-yaml@5.4.2:
     dependencies:
       argparse: 2.0.1
 
