@@ -32,7 +32,7 @@ Answering rules:
 - Member roles are current observations over the scan's start/end times, not a historical or atomic snapshot. A Verified role is role membership, not independent verification of a person's identity.
 - Keep the answer concise, use readable headings, and finish with coverage or limitations when any result is partial.`;
 
-function DiscordAnalyst() {
+const DiscordAnalyst = () => {
   useModel(MODEL, { thinkingLevel: "low" });
   useResponseStart(() => ({
     model: MODEL,
@@ -41,6 +41,6 @@ function DiscordAnalyst() {
   useDiscordTools(getDiscordReader());
 
   return DISCORD_ANALYST_INSTRUCTIONS;
-}
+};
 
 export { DISCORD_ANALYST_INSTRUCTIONS, DiscordAnalyst };

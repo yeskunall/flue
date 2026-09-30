@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import createMemberLookupTool from "#/agents/analyst/tools/members.ts";
 import type { MemberLookupResult } from "#/discord";
 
-function lookup(
+const lookup = (
   status: MemberLookupResult["status"] = "complete",
-): MemberLookupResult {
+): MemberLookupResult => {
   const role = { id: "100000000000000002", name: "Verified" };
   // oxlint-disable-next-line id-length
   const members = Array.from({ length: 40 }, (_, index) => ({
@@ -32,7 +32,7 @@ function lookup(
     startedAt: "2026-09-01T12:00:00Z",
     status,
   };
-}
+};
 
 const context = {
   data: {

@@ -7,7 +7,7 @@ import { DiscordReader } from "#/reader.ts";
 
 let reader: DiscordReader | undefined = undefined;
 
-export default function getDiscordReader(): DiscordReader {
+const getDiscordReader = (): DiscordReader => {
   if (reader) {
     return reader;
   }
@@ -42,4 +42,6 @@ export default function getDiscordReader(): DiscordReader {
     env.DISCORD_GUILD_ID,
   );
   return reader;
-}
+};
+
+export default getDiscordReader;

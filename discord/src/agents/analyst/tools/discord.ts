@@ -22,7 +22,7 @@ const recentDays = optional(
   7,
 );
 
-function useDiscordTools(reader: DiscordReader): void {
+const useDiscordTools = (reader: DiscordReader): void => {
   useTool(createMemberLookupTool(reader));
 
   useTool({
@@ -101,10 +101,9 @@ function useDiscordTools(reader: DiscordReader): void {
     }),
     run: ({ data }) => asToolJson(reader.getRecentAuditLog(data.days)),
   });
-}
+};
 
-async function asToolJson(value: Promise<unknown>): Promise<string> {
-  return JSON.stringify(await value, undefined, 2);
-}
+const asToolJson = async (value: Promise<unknown>): Promise<string> =>
+  JSON.stringify(await value, undefined, 2);
 
 export default useDiscordTools;

@@ -26,41 +26,37 @@ const roles = [
   { id: MUTED, name: "Muted" },
 ];
 
-function member(index: number, roleIds: string[], bot = false) {
-  return {
-    deaf: false,
-    flags: 0,
-    joined_at: "2026-01-01T00:00:00Z",
-    mute: false,
-    nick: index === 1 ? "First member" : null,
-    roles: roleIds,
-    user: {
-      avatar: null,
-      bot,
-      discriminator: "0",
-      global_name: `Member ${index}`,
-      id: String(200_000_000_000_000_000n + BigInt(index)),
-      username: `member${index}`,
-    },
-  };
-}
+const member = (index: number, roleIds: string[], bot = false) => ({
+  deaf: false,
+  flags: 0,
+  joined_at: "2026-01-01T00:00:00Z",
+  mute: false,
+  nick: index === 1 ? "First member" : null,
+  roles: roleIds,
+  user: {
+    avatar: null,
+    bot,
+    discriminator: "0",
+    global_name: `Member ${index}`,
+    id: String(200_000_000_000_000_000n + BigInt(index)),
+    username: `member${index}`,
+  },
+});
 
-function transport(
+const transport = (
   getMembers: DiscordRestTransport["get"],
   availableRoles = roles,
-): DiscordRestTransport {
-  return {
-    get: async (route, options) => {
-      if (route === Routes.guildRoles(GUILD)) {
-        return availableRoles;
-      }
-      if (route !== Routes.guildMembers(GUILD)) {
-        throw new Error(`Unexpected route: ${route}`);
-      }
-      return getMembers(route, options);
-    },
-  };
-}
+): DiscordRestTransport => ({
+  get: async (route, options) => {
+    if (route === Routes.guildRoles(GUILD)) {
+      return availableRoles;
+    }
+    if (route !== Routes.guildMembers(GUILD)) {
+      throw new Error(`Unexpected route: ${route}`);
+    }
+    return getMembers(route, options);
+  },
+});
 
 describe("member role filters", () => {
   it("resolves exact names, case-insensitive names, role mentions and IDs", () => {

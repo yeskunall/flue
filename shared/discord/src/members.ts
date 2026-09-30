@@ -103,13 +103,13 @@ const membersSchema = array(
 );
 
 /** Resolve names once; an unknown excluded role must never silently match everyone. */
-function resolveMemberRoles(
+const resolveMemberRoles = (
   roles: readonly MemberRole[],
   input: unknown,
-): { filter: ResolvedMemberRoles | null; issues: RoleSelectionIssue[] } {
+): { filter: ResolvedMemberRoles | null; issues: RoleSelectionIssue[] } => {
   const parsed = parse(memberRoleFilterSchema, input);
   const issues: RoleSelectionIssue[] = [];
-  function resolve(references: string[]): MemberRole[] {
+  const resolve = (references: string[]): MemberRole[] => {
     const selected = new Map<string, MemberRole>();
     for (const reference of references) {
       const mentionId = /^<@&(?<roleId>\d+)>$/.exec(reference)?.groups?.roleId;
@@ -138,7 +138,7 @@ function resolveMemberRoles(
       }
     }
     return [...selected.values()];
-  }
+  };
   const filter: ResolvedMemberRoles = {
     allOf: resolve(parsed.allOf),
     anyOf: resolve(parsed.anyOf),
@@ -163,13 +163,13 @@ function resolveMemberRoles(
   // An invalid filter must remain explicit in serialized results.
   // oxlint-disable-next-line unicorn/no-null
   return { filter: issues.length ? null : filter, issues };
-}
+};
 
-function matchesMemberRoles(
+const matchesMemberRoles = (
   member: { roleIds: readonly string[]; isBot: boolean },
   filter: ResolvedMemberRoles,
   guildId: string,
-): boolean {
+): boolean => {
   if (filter.memberType === "humans" && member.isBot) {
     return false;
   }
@@ -184,7 +184,7 @@ function matchesMemberRoles(
     && (!filter.anyOf.length || filter.anyOf.some(has))
     && !filter.noneOf.some(has)
   );
-}
+};
 
 interface MemberScanOptions {
   now?: () => Date;
@@ -194,12 +194,12 @@ interface MemberScanOptions {
 }
 
 /** A bounded, live roster scan. No caching or changes to Discord. */
-async function findMembersByRoles(
+const findMembersByRoles = async (
   rest: DiscordRestTransport,
   guildId: string,
   input: unknown,
   options: MemberScanOptions = {},
-): Promise<MemberLookupResult> {
+): Promise<MemberLookupResult> => {
   const parsed = parse(memberRoleFilterSchema, input);
   parse(snowflake, guildId);
   const positiveInteger = pipe(number(), integer(), minValue(1));
@@ -226,11 +226,11 @@ async function findMembersByRoles(
   let scannedMemberCount = 0;
   let scope: "roles" | "members" = "roles";
 
-  function finish(
+  const finish = (
     status: MemberLookupResult["status"],
     reason?: string,
     requiredAccess: string[] = [],
-  ): MemberLookupResult {
+  ): MemberLookupResult => {
     members.sort((left, right) => compareIds(left.id, right.id));
     return {
       filter,
@@ -249,7 +249,7 @@ async function findMembersByRoles(
       startedAt,
       status,
     };
-  }
+  };
 
   try {
     signal.throwIfAborted();
@@ -374,14 +374,14 @@ async function findMembersByRoles(
         : `Discord member lookup failed${typeof httpStatus === "number" ? ` (HTTP ${httpStatus})` : ""}. Retry later; this is not a confirmed permission failure.`,
     );
   }
-}
+};
 
-async function getWithinDeadline(
+const getWithinDeadline = async (
   rest: DiscordRestTransport,
   route: string,
   signal: AbortSignal,
   query?: URLSearchParams,
-): Promise<unknown> {
+): Promise<unknown> => {
   signal.throwIfAborted();
   let onAbort: (() => void) | undefined = undefined;
   const aborted = new Promise<never>((_resolve, reject) => {
@@ -401,15 +401,10 @@ async function getWithinDeadline(
       signal.removeEventListener("abort", onAbort);
     }
   }
-}
+};
 
-function compareIds(left: string, right: string): number {
-  return BigInt(left) < BigInt(right)
-    ? -1
-    : BigInt(left) > BigInt(right)
-      ? 1
-      : 0;
-}
+const compareIds = (left: string, right: string): number =>
+  BigInt(left) < BigInt(right) ? -1 : BigInt(left) > BigInt(right) ? 1 : 0;
 
 export {
   findMembersByRoles,

@@ -9,28 +9,26 @@ const READABLE_CHANNEL_PERMISSIONS = (
   PermissionFlagsBits.ViewChannel | PermissionFlagsBits.ReadMessageHistory
 ).toString();
 
-function reader(
+const reader = (
   get: DiscordRestTransport["get"],
   limits: ConstructorParameters<typeof DiscordReader>[2] = {},
-) {
-  return new DiscordReader({ get }, "123456789012345678", {
+) =>
+  new DiscordReader({ get }, "123456789012345678", {
     now: () => NOW,
     ...limits,
   });
-}
 
-function queryValue(
+const queryValue = (
   options: DiscordRestOptions | undefined,
   key: string,
-): string | null {
-  return options?.query?.get(key) ?? null;
-}
+): string | null => options?.query?.get(key) ?? null;
 
-function withBotPermissions(
-  permissions: string,
-  get: DiscordRestTransport["get"],
-): DiscordRestTransport["get"] {
-  return async (route, options) => {
+const withBotPermissions =
+  (
+    permissions: string,
+    get: DiscordRestTransport["get"],
+  ): DiscordRestTransport["get"] =>
+  async (route, options) => {
     if (route === Routes.user()) {
       return { id: "bot-user", username: "Campfire bot" };
     }
@@ -66,7 +64,6 @@ function withBotPermissions(
     }
     return get(route, options);
   };
-}
 
 describe("DiscordReader server data", () => {
   it("fetches a trusted guild overview with approximate counts and a retrieval timestamp", async () => {

@@ -995,14 +995,15 @@ class DiscordReader {
   }
 }
 
-function channelIdentity(channel: MessageChannel) {
-  return { channelId: channel.id, channelName: channel.name };
-}
+const channelIdentity = (channel: MessageChannel) => ({
+  channelId: channel.id,
+  channelName: channel.name,
+});
 
-function missingMessagePermission(
+const missingMessagePermission = (
   channel: MessageChannel,
   context: BotPermissionContext,
-): string | undefined {
+): string | undefined => {
   const permissions = effectiveChannelPermissions(channel, context);
   if (!hasPermission(permissions, PermissionFlagsBits.ViewChannel)) {
     return "Missing View Channel permission.";
@@ -1011,12 +1012,12 @@ function missingMessagePermission(
     return "Missing Read Message History permission.";
   }
   return undefined;
-}
+};
 
-function effectiveChannelPermissions(
+const effectiveChannelPermissions = (
   channel: MessageChannel,
   context: BotPermissionContext,
-): bigint {
+): bigint => {
   if (
     hasPermission(context.basePermissions, PermissionFlagsBits.Administrator)
   ) {
@@ -1052,28 +1053,23 @@ function effectiveChannelPermissions(
     permissions = applyOverwrite(permissions, member);
   }
   return permissions;
-}
+};
 
-function applyOverwrite(
+const applyOverwrite = (
   permissions: bigint,
   overwrite: PermissionOverwrite,
-): bigint {
-  return (permissions & ~BigInt(overwrite.deny)) | BigInt(overwrite.allow);
-}
+): bigint => (permissions & ~BigInt(overwrite.deny)) | BigInt(overwrite.allow);
 
-function hasPermission(permissions: bigint, permission: bigint): boolean {
-  return (
-    (permissions & PermissionFlagsBits.Administrator)
-      === PermissionFlagsBits.Administrator
-    || (permissions & permission) === permission
-  );
-}
+const hasPermission = (permissions: bigint, permission: bigint): boolean =>
+  (permissions & PermissionFlagsBits.Administrator)
+    === PermissionFlagsBits.Administrator
+  || (permissions & permission) === permission;
 
-function allocateMessageLimits(
+const allocateMessageLimits = (
   channelCount: number,
   totalLimit: number,
   perChannelLimit: number,
-): number[] {
+): number[] => {
   if (channelCount === 0) {
     return [];
   }
@@ -1093,9 +1089,9 @@ function allocateMessageLimits(
     remaining -= 1;
   }
   return limits;
-}
+};
 
-function requiredPermissionsForMessageReason(reason: string): string[] {
+const requiredPermissionsForMessageReason = (reason: string): string[] => {
   if (reason === "Missing View Channel permission.") {
     return ["View Channel"];
   }
@@ -1103,13 +1099,13 @@ function requiredPermissionsForMessageReason(reason: string): string[] {
     return ["Read Message History"];
   }
   return ["View Channel", "Read Message History"];
-}
+};
 
-async function mapWithConcurrency<Input, Output>(
+const mapWithConcurrency = async <Input, Output>(
   values: readonly Input[],
   concurrency: number,
   operation: (value: Input) => Promise<Output>,
-): Promise<Output[]> {
+): Promise<Output[]> => {
   const results: Output[] = [];
   results.length = values.length;
   let nextIndex = 0;
@@ -1128,9 +1124,9 @@ async function mapWithConcurrency<Input, Output>(
   );
   await Promise.all(workers);
   return results;
-}
+};
 
-function mapPermissionOverwrites(value: unknown) {
+const mapPermissionOverwrites = (value: unknown) => {
   if (value === undefined) {
     return [];
   }
@@ -1143,9 +1139,9 @@ function mapPermissionOverwrites(value: unknown) {
       type: expectNumber(record.type, "channel permission overwrite.type"),
     };
   });
-}
+};
 
-function isHiddenOrMissingPermission(error: unknown): boolean {
+const isHiddenOrMissingPermission = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
     return false;
   }
@@ -1159,104 +1155,101 @@ function isHiddenOrMissingPermission(error: unknown): boolean {
     || code === "50001"
     || code === "50013"
   );
-}
+};
 
-function positiveInteger(value: number, name: string): number {
+const positiveInteger = (value: number, name: string): number => {
   if (!Number.isInteger(value) || value < 1) {
     throw new RangeError(`${name} must be a positive integer.`);
   }
   return value;
-}
+};
 
-function expectRecord(value: unknown, label: string): Record<string, unknown> {
+const expectRecord = (
+  value: unknown,
+  label: string,
+): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value as Record<string, unknown>;
-}
+};
 
-function expectArray(value: unknown, label: string): unknown[] {
+const expectArray = (value: unknown, label: string): unknown[] => {
   if (!Array.isArray(value)) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function expectString(value: unknown, label: string): string {
+const expectString = (value: unknown, label: string): string => {
   if (typeof value !== "string") {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function optionalString(value: unknown, label: string): string | undefined {
-  return value === undefined ? undefined : expectString(value, label);
-}
+const optionalString = (value: unknown, label: string): string | undefined =>
+  value === undefined ? undefined : expectString(value, label);
 
-function optionalNullableString(
+const optionalNullableString = (
   value: unknown,
   label: string,
-): string | null | undefined {
+): string | null | undefined => {
   if (value === null || value === undefined) {
     return value;
   }
   return expectString(value, label);
-}
+};
 
-function expectNumber(value: unknown, label: string): number {
+const expectNumber = (value: unknown, label: string): number => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function optionalNumber(value: unknown, label: string): number | undefined {
-  return value === undefined ? undefined : expectNumber(value, label);
-}
+const optionalNumber = (value: unknown, label: string): number | undefined =>
+  value === undefined ? undefined : expectNumber(value, label);
 
-function expectBoolean(value: unknown, label: string): boolean {
+const expectBoolean = (value: unknown, label: string): boolean => {
   if (typeof value !== "boolean") {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function optionalBoolean(value: unknown, label: string): boolean | undefined {
-  return value === undefined ? undefined : expectBoolean(value, label);
-}
+const optionalBoolean = (value: unknown, label: string): boolean | undefined =>
+  value === undefined ? undefined : expectBoolean(value, label);
 
-function expectStringArray(value: unknown, label: string): string[] {
+const expectStringArray = (value: unknown, label: string): string[] => {
   const items = expectArray(value, label);
   if (items.some(item => typeof item !== "string")) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return items as string[];
-}
+};
 
-function channelTypeName(type: number): string {
-  return ChannelType[type] ?? `Unknown(${type})`;
-}
+const channelTypeName = (type: number): string =>
+  ChannelType[type] ?? `Unknown(${type})`;
 
-function scheduledEventStatusName(status: number): string {
-  return GuildScheduledEventStatus[status] ?? `Unknown(${status})`;
-}
+const scheduledEventStatusName = (status: number): string =>
+  GuildScheduledEventStatus[status] ?? `Unknown(${status})`;
 
-function auditLogActionName(action: number): string {
-  return AuditLogEvent[action] ?? `Unknown(${action})`;
-}
+const auditLogActionName = (action: number): string =>
+  AuditLogEvent[action] ?? `Unknown(${action})`;
 
-function snowflakeTimestamp(id: string): string {
+const snowflakeTimestamp = (id: string): string => {
   const milliseconds = (BigInt(id) >> 22n) + DISCORD_EPOCH;
   return new Date(Number(milliseconds)).toISOString();
-}
+};
 
-function countBy(values: readonly string[]): Record<string, number> {
+const countBy = (values: readonly string[]): Record<string, number> => {
   const counts: Record<string, number> = {};
   for (const value of values) {
     counts[value] = (counts[value] ?? 0) + 1;
   }
   return counts;
-}
+};
 
 export { DiscordReader };
 export type { DiscordReaderOptions, DiscordRestOptions, DiscordRestTransport };

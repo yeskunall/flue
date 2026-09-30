@@ -182,10 +182,10 @@ const CHANNEL_RISK_PERMISSIONS = ROLE_RISK_PERMISSIONS.filter(
     || name === "MentionEveryone",
 );
 
-function calculateMessageActivity(
+const calculateMessageActivity = (
   scans: readonly ChannelMessageScan[],
   period: ObservationPeriod,
-): MessageActivity {
+): MessageActivity => {
   const start = Date.parse(period.start);
   const end = Date.parse(period.end);
   const ranking: MessageActivity["ranking"] = [];
@@ -231,12 +231,12 @@ function calculateMessageActivity(
     unavailableChannels,
     visibleMessageCount,
   };
-}
+};
 
-function calculateInactiveChannels(
+const calculateInactiveChannels = (
   observations: readonly LatestMessageObservation[],
   options: { observedAt: string; thresholdDays: number },
-): InactiveChannels {
+): InactiveChannels => {
   const observedAt = Date.parse(options.observedAt);
   const inactive: InactiveChannels["inactive"] = [];
   const noVisibleMessages: InactiveChannels["noVisibleMessages"] = [];
@@ -288,13 +288,13 @@ function calculateInactiveChannels(
     noVisibleMessages,
     unavailableChannels,
   };
-}
+};
 
-function assessPermissionRisks(input: {
+const assessPermissionRisks = (input: {
   guildId: string;
   roles: readonly RiskRole[];
   channels: readonly RiskChannel[];
-}): PermissionRisk[] {
+}): PermissionRisk[] => {
   const risks: PermissionRisk[] = [];
 
   for (const role of input.roles) {
@@ -354,11 +354,10 @@ function assessPermissionRisks(input: {
     (left, right) =>
       severityOrder[left.severity] - severityOrder[right.severity],
   );
-}
+};
 
-function hasPermission(permissions: bigint, flag: bigint): boolean {
-  return (permissions & flag) === flag;
-}
+const hasPermission = (permissions: bigint, flag: bigint): boolean =>
+  (permissions & flag) === flag;
 
 export {
   assessPermissionRisks,
