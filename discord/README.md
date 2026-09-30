@@ -1,8 +1,7 @@
 ## Discord
 
 `DiscordAnalyst` uses GPT-6 Luna via OpenRouter by default and the Discord REST
-API v10 to answer terminal questions about one configured Discord server. Its
-model can be changed to an OpenAI, OpenRouter, or Anthropic model.
+API v10 to answer terminal questions about one configured Discord server.
 
 > [!NOTE]  
 > The bot is read-only. It cannot post messages, moderate members, or change
@@ -35,15 +34,18 @@ umask 077 && op inject -i discord/.env.example -o discord/.env
 #### Model
 
 The default is `openrouter/openai/gpt-6-luna`. Set `MODEL` in `discord/.env` or
-for one command to use another model:
+for one command to use another OpenRouter model:
 
 ```sh
-MODEL=openai/gpt-5.5 pnpm ask:continue --message "Check the active threads."
+MODEL=openrouter/moonshotai/kimi-k2.6 pnpm ask:continue --message "Check the active threads."
 ```
 
-Supply the chosen provider's key (`OPENAI_API_KEY` in this example) and use a
-model that supports tool calling. A new `MODEL` takes effect on the next
+Both models use `OPENROUTER_API_KEY`. A new `MODEL` takes effect on the next
 submission.
+
+> [!IMPORTANT]
+>
+> Any agent using the Discord tools needs a model that supports tool calling.
 
 #### Discord access
 
