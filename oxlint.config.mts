@@ -27,6 +27,7 @@ export default defineConfig({
       "error",
       { checkRelationalComparisons: false },
     ],
+    "no-duplicate-imports": ["warn", { allowSeparateTypeImports: true }],
     "no-empty": "error",
     "no-fallthrough": "error",
     "no-irregular-whitespace": [
