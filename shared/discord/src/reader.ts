@@ -34,7 +34,7 @@ export interface DiscordRestOptions {
 }
 
 export interface DiscordRestTransport {
-  get(route: string, options?: DiscordRestOptions): Promise<unknown>;
+  get: (route: string, options?: DiscordRestOptions) => Promise<unknown>;
 }
 
 export interface DiscordReaderOptions {
