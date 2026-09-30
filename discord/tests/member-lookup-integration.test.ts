@@ -31,8 +31,9 @@ describe("member lookup integration", () => {
           const offset = after ? Number(BigInt(after) - baseId) : 0;
           return Array.from(
             { length: Math.min(1000, 30_001 - offset) },
+            // oxlint-disable-next-line id-length
             (_, index) => {
-              const n = offset + index + 1;
+              const memberNumber = offset + index + 1;
               return {
                 deaf: false,
                 flags: 0,
@@ -40,16 +41,16 @@ describe("member lookup integration", () => {
                 mute: false,
                 nick: null,
                 roles: [
-                  ...(n % 2 === 0 ? [verified] : []),
-                  ...(n % 6 === 0 ? [muted] : []),
+                  ...(memberNumber % 2 === 0 ? [verified] : []),
+                  ...(memberNumber % 6 === 0 ? [muted] : []),
                 ],
                 user: {
                   avatar: null,
-                  bot: n % 10 === 0,
+                  bot: memberNumber % 10 === 0,
                   discriminator: "0",
                   global_name: null,
-                  id: String(baseId + BigInt(n)),
-                  username: `member${n}`,
+                  id: String(baseId + BigInt(memberNumber)),
+                  username: `member${memberNumber}`,
                 },
               };
             },

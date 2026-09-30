@@ -758,19 +758,19 @@ class DiscordReader {
     };
   }
 
-  async #get<T>(route: string, query?: URLSearchParams): Promise<T> {
+  async #get<Result>(route: string, query?: URLSearchParams): Promise<Result> {
     const result = await this.#rest.get(route, query ? { query } : undefined);
-    return result as T;
+    return result as Result;
   }
 
-  async #getOptional<T>(
+  async #getOptional<Result>(
     route: string,
     scope: string,
     reason: string,
     requiredPermissions: string[],
-  ): Promise<{ data: T | undefined; unavailable: UnavailableMetric[] }> {
+  ): Promise<{ data: Result | undefined; unavailable: UnavailableMetric[] }> {
     try {
-      return { data: await this.#get<T>(route), unavailable: [] };
+      return { data: await this.#get<Result>(route), unavailable: [] };
     } catch (error) {
       if (!isHiddenOrMissingPermission(error)) {
         throw error;
@@ -1105,12 +1105,12 @@ function requiredPermissionsForMessageReason(reason: string): string[] {
   return ["View Channel", "Read Message History"];
 }
 
-async function mapWithConcurrency<T, R>(
-  values: readonly T[],
+async function mapWithConcurrency<Input, Output>(
+  values: readonly Input[],
   concurrency: number,
-  operation: (value: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = [];
+  operation: (value: Input) => Promise<Output>,
+): Promise<Output[]> {
+  const results: Output[] = [];
   results.length = values.length;
   let nextIndex = 0;
   const workers = Array.from(

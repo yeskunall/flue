@@ -7,6 +7,7 @@ function lookup(
   status: MemberLookupResult["status"] = "complete",
 ): MemberLookupResult {
   const role = { id: "100000000000000002", name: "Verified" };
+  // oxlint-disable-next-line id-length
   const members = Array.from({ length: 40 }, (_, index) => ({
     displayName: `Member ${index}`,
     id: String(200_000_000_000_000_000n + BigInt(index)),
