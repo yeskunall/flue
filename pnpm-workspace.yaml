@@ -4,6 +4,7 @@ packages:
 
 catalog:
   "@discordjs/rest": 2.6.3
+  "@earendil-works/pi-ai": 0.87.1
   "@flue/cli": 2.0.3
   "@flue/runtime": 2.0.3
   "@t3-oss/env-core": 0.13.11
@@ -14,6 +15,10 @@ catalog:
   typescript: 7.0.2
   valibot: 1.4.2
   vitest: 4.1.11
+
+overrides:
+  # Flue 2.2.0 supports GPT-6 Luna without this override.
+  "@earendil-works/pi-ai": 0.87.1
 
 allowBuilds:
   "@google/genai": false
