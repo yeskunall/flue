@@ -270,7 +270,7 @@ async function findMembersByRoles(
     }
 
     scope = "members";
-    let after: string | undefined;
+    let after: string | undefined = undefined;
     while (scannedMemberCount < maxMembers) {
       signal.throwIfAborted();
       const limit = Math.min(pageSize, maxMembers - scannedMemberCount);
@@ -383,7 +383,7 @@ async function getWithinDeadline(
   query?: URLSearchParams,
 ): Promise<unknown> {
   signal.throwIfAborted();
-  let onAbort: (() => void) | undefined;
+  let onAbort: (() => void) | undefined = undefined;
   const aborted = new Promise<never>((_resolve, reject) => {
     onAbort = () => reject(signal.reason);
     signal.addEventListener("abort", onAbort, { once: true });

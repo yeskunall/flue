@@ -625,7 +625,7 @@ class DiscordReader {
     const observationPeriod = this.#periodForDays(days, 45, "audit log");
     const entries: Array<Record<string, unknown>> = [];
     const users = new Map<string, string>();
-    let before: string | undefined;
+    let before: string | undefined = undefined;
     let reachedPeriodStart = false;
 
     try {
@@ -856,7 +856,7 @@ class DiscordReader {
     messageLimit: number,
   ): Promise<ChannelScanResult> {
     const messages: Array<{ id: string; timestamp: string }> = [];
-    let before: string | undefined;
+    let before: string | undefined = undefined;
     let requestCount = 0;
 
     try {

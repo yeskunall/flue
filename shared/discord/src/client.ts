@@ -5,7 +5,7 @@ import { minLength, pipe, regex, string, trim } from "valibot";
 
 import { DiscordReader } from "#/reader.ts";
 
-let reader: DiscordReader | undefined;
+let reader: DiscordReader | undefined = undefined;
 
 export default function getDiscordReader(): DiscordReader {
   if (reader) {
