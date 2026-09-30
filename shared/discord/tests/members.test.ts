@@ -1,3 +1,5 @@
+// Node-only tests yield the event loop without a wall-clock sleep.
+// oxlint-disable-next-line import/no-nodejs-modules
 import { setImmediate } from "node:timers/promises";
 
 import { Routes } from "discord-api-types/v10";
