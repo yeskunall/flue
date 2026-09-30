@@ -8,6 +8,7 @@ export function createMemberLookupTool(
 ) {
   return defineTool({
     name: "get_members_by_roles",
+
     description: [
       "Find current members of the configured Discord server by role names, IDs, or role mentions.",
       "allOf: must have EVERY listed role; anyOf: must have at least ONE listed role when nonempty;",
@@ -29,9 +30,9 @@ export function createMemberLookupTool(
       return JSON.stringify(
         {
           ...summary,
+          matchedCountIsLowerBound: result.status === "partial",
           membersPreview: members.slice(0, 25),
           previewTruncated: members.length > 25,
-          matchedCountIsLowerBound: result.status === "partial",
         },
         null,
         2,

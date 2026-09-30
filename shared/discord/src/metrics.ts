@@ -212,8 +212,8 @@ export function calculateMessageActivity(
     ranking.push({
       channelId: scan.channelId,
       channelName: scan.channelName,
-      visibleMessageCount: count,
       countIsLowerBound: scan.status === "capped",
+      visibleMessageCount: count,
     });
   }
 
@@ -224,10 +224,10 @@ export function calculateMessageActivity(
   );
 
   return {
-    visibleMessageCount,
-    ranking,
     cappedChannels,
+    ranking,
     unavailableChannels,
+    visibleMessageCount,
   };
 }
 
@@ -266,8 +266,8 @@ export function calculateInactiveChannels(
       inactive.push({
         channelId: observation.channelId,
         channelName: observation.channelName,
-        latestVisibleMessageAt: observation.latestVisibleMessageAt,
         inactiveForDays,
+        latestVisibleMessageAt: observation.latestVisibleMessageAt,
       });
     } else {
       activeChannelCount += 1;
@@ -281,9 +281,9 @@ export function calculateInactiveChannels(
   );
 
   return {
+    activeChannelCount,
     inactive,
     noVisibleMessages,
-    activeChannelCount,
     unavailableChannels,
   };
 }
@@ -302,19 +302,19 @@ export function assessPermissionRisks(input: {
       if (!hasPermission(permissions, riskPermission.flag)) continue;
       const isEveryone = role.id === input.guildId;
       risks.push({
-        severity:
-          isEveryone && riskPermission.severity === "high"
-            ? "high"
-            : riskPermission.severity,
-        subjectType: "role",
-        subjectId: role.id,
-        subjectName: role.name,
-        permission: riskPermission.name,
         explanation: isEveryone
           ? "The @everyone role grants a high-impact permission to every server member."
           : riskPermission.name === "Administrator"
             ? "This assignable role bypasses channel-specific permission checks. Review who can receive it."
             : "This assignable role grants a high-impact server permission. Review who can receive it.",
+        permission: riskPermission.name,
+        severity:
+          isEveryone && riskPermission.severity === "high"
+            ? "high"
+            : riskPermission.severity,
+        subjectId: role.id,
+        subjectName: role.name,
+        subjectType: "role",
       });
     }
   }
@@ -328,13 +328,13 @@ export function assessPermissionRisks(input: {
     for (const riskPermission of CHANNEL_RISK_PERMISSIONS) {
       if (!hasPermission(allowed, riskPermission.flag)) continue;
       risks.push({
-        severity: riskPermission.severity,
-        subjectType: "channel",
-        subjectId: channel.id,
-        subjectName: channel.name,
-        permission: riskPermission.name,
         explanation:
           "The @everyone channel override grants a high-impact permission to every server member.",
+        permission: riskPermission.name,
+        severity: riskPermission.severity,
+        subjectId: channel.id,
+        subjectName: channel.name,
+        subjectType: "channel",
       });
     }
   }

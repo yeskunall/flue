@@ -106,14 +106,14 @@ const MESSAGE_CHANNEL_TYPES = new Set<number>([
 ]);
 
 const DEFAULT_OPTIONS: Omit<ResolvedDiscordReaderOptions, "now"> = {
-  maxLookbackDays: 30,
-  maxInactiveDays: 365,
+  concurrency: 4,
+  maxAuditEntries: 300,
   maxChannels: 50,
+  maxInactiveDays: 365,
+  maxLookbackDays: 30,
   maxMessagesPerChannel: 500,
   maxTotalMessages: 5_000,
-  maxAuditEntries: 300,
   pageSize: 100,
-  concurrency: 4,
 };
 
 export class DiscordReader {
@@ -129,18 +129,25 @@ export class DiscordReader {
     this.#rest = rest;
     this.#guildId = guildId;
     this.#options = {
-      now: options.now ?? (() => new Date()),
-      maxLookbackDays: positiveInteger(
-        options.maxLookbackDays ?? DEFAULT_OPTIONS.maxLookbackDays,
-        "maxLookbackDays",
+      concurrency: positiveInteger(
+        options.concurrency ?? DEFAULT_OPTIONS.concurrency,
+        "concurrency",
+      ),
+      maxAuditEntries: positiveInteger(
+        options.maxAuditEntries ?? DEFAULT_OPTIONS.maxAuditEntries,
+        "maxAuditEntries",
+      ),
+      maxChannels: positiveInteger(
+        options.maxChannels ?? DEFAULT_OPTIONS.maxChannels,
+        "maxChannels",
       ),
       maxInactiveDays: positiveInteger(
         options.maxInactiveDays ?? DEFAULT_OPTIONS.maxInactiveDays,
         "maxInactiveDays",
       ),
-      maxChannels: positiveInteger(
-        options.maxChannels ?? DEFAULT_OPTIONS.maxChannels,
-        "maxChannels",
+      maxLookbackDays: positiveInteger(
+        options.maxLookbackDays ?? DEFAULT_OPTIONS.maxLookbackDays,
+        "maxLookbackDays",
       ),
       maxMessagesPerChannel: positiveInteger(
         options.maxMessagesPerChannel ?? DEFAULT_OPTIONS.maxMessagesPerChannel,
@@ -150,20 +157,13 @@ export class DiscordReader {
         options.maxTotalMessages ?? DEFAULT_OPTIONS.maxTotalMessages,
         "maxTotalMessages",
       ),
-      maxAuditEntries: positiveInteger(
-        options.maxAuditEntries ?? DEFAULT_OPTIONS.maxAuditEntries,
-        "maxAuditEntries",
-      ),
+      now: options.now ?? (() => new Date()),
       pageSize: Math.min(
         100,
         positiveInteger(
           options.pageSize ?? DEFAULT_OPTIONS.pageSize,
           "pageSize",
         ),
-      ),
-      concurrency: positiveInteger(
-        options.concurrency ?? DEFAULT_OPTIONS.concurrency,
-        "concurrency",
       ),
     };
   }
@@ -183,26 +183,7 @@ export class DiscordReader {
       );
       const value = expectRecord(guild, "guild");
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
         facts: {
-          id: expectString(value.id, "guild.id"),
-          name: expectString(value.name, "guild.name"),
-          description: optionalNullableString(
-            value.description,
-            "guild.description",
-          ),
-          ownerId: expectString(value.owner_id, "guild.owner_id"),
-          features: expectStringArray(value.features, "guild.features"),
-          verificationLevel: expectNumber(
-            value.verification_level,
-            "guild.verification_level",
-          ),
-          premiumTier: expectNumber(value.premium_tier, "guild.premium_tier"),
-          premiumSubscriptionCount: optionalNumber(
-            value.premium_subscription_count,
-            "guild.premium_subscription_count",
-          ),
           approximateMemberCount: optionalNumber(
             value.approximate_member_count,
             "guild.approximate_member_count",
@@ -211,21 +192,40 @@ export class DiscordReader {
             value.approximate_presence_count,
             "guild.approximate_presence_count",
           ),
+          description: optionalNullableString(
+            value.description,
+            "guild.description",
+          ),
+          features: expectStringArray(value.features, "guild.features"),
+          id: expectString(value.id, "guild.id"),
+          name: expectString(value.name, "guild.name"),
+          ownerId: expectString(value.owner_id, "guild.owner_id"),
+          premiumSubscriptionCount: optionalNumber(
+            value.premium_subscription_count,
+            "guild.premium_subscription_count",
+          ),
+          premiumTier: expectNumber(value.premium_tier, "guild.premium_tier"),
+          verificationLevel: expectNumber(
+            value.verification_level,
+            "guild.verification_level",
+          ),
         },
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [] as UnavailableMetric[],
       };
     } catch (error) {
       if (!isHiddenOrMissingPermission(error)) throw error;
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
         facts: null,
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [
           {
-            scope: "server-overview",
             reason:
               "Discord did not allow this bot to view the configured guild.",
             requiredPermissions: ["Server membership"],
+            scope: "server-overview",
           },
         ] satisfies UnavailableMetric[],
       };
@@ -281,16 +281,16 @@ export class DiscordReader {
       .map(channel => expectRecord(channel, "guild channel"))
       .filter(channel => channel.type !== ChannelType.GuildCategory)
       .map(channel => ({
-        id: expectString(channel.id, "channel.id"),
-        name: expectString(channel.name, "channel.name"),
-        type: channelTypeName(expectNumber(channel.type, "channel.type")),
         categoryId: optionalNullableString(
           channel.parent_id,
           "channel.parent_id",
         ),
+        id: expectString(channel.id, "channel.id"),
+        name: expectString(channel.name, "channel.name"),
+        nsfw: optionalBoolean(channel.nsfw, "channel.nsfw"),
         position: expectNumber(channel.position, "channel.position"),
         topic: optionalNullableString(channel.topic, "channel.topic"),
-        nsfw: optionalBoolean(channel.nsfw, "channel.nsfw"),
+        type: channelTypeName(expectNumber(channel.type, "channel.type")),
       }))
       .toSorted(
         (left, right) =>
@@ -301,11 +301,11 @@ export class DiscordReader {
       .map(role => expectRecord(role, "guild role"))
       .map(role => ({
         id: expectString(role.id, "role.id"),
+        managed: expectBoolean(role.managed, "role.managed"),
+        mentionable: expectBoolean(role.mentionable, "role.mentionable"),
         name: expectString(role.name, "role.name"),
         permissions: expectString(role.permissions, "role.permissions"),
         position: expectNumber(role.position, "role.position"),
-        managed: expectBoolean(role.managed, "role.managed"),
-        mentionable: expectBoolean(role.mentionable, "role.mentionable"),
       }))
       .toSorted((left, right) => right.position - left.position);
 
@@ -313,14 +313,14 @@ export class DiscordReader {
       .map(thread => expectRecord(thread, "active thread"))
       .map(thread => ({
         id: expectString(thread.id, "thread.id"),
-        name: expectString(thread.name, "thread.name"),
-        parentId: optionalNullableString(thread.parent_id, "thread.parent_id"),
-        ownerId: optionalString(thread.owner_id, "thread.owner_id"),
+        memberCount: optionalNumber(thread.member_count, "thread.member_count"),
         messageCount: optionalNumber(
           thread.message_count,
           "thread.message_count",
         ),
-        memberCount: optionalNumber(thread.member_count, "thread.member_count"),
+        name: expectString(thread.name, "thread.name"),
+        ownerId: optionalString(thread.owner_id, "thread.owner_id"),
+        parentId: optionalNullableString(thread.parent_id, "thread.parent_id"),
       }))
       .toSorted((left, right) => left.name.localeCompare(right.name));
 
@@ -329,33 +329,33 @@ export class DiscordReader {
       return {
         id: expectString(value.id, "channel.id"),
         name: expectString(value.name, "channel.name"),
-        type: expectNumber(value.type, "channel.type"),
         permission_overwrites: mapPermissionOverwrites(
           value.permission_overwrites,
         ),
+        type: expectNumber(value.type, "channel.type"),
       };
     });
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
+      calculations: {
+        activeThreadCount: threadResult.data ? activeThreads.length : null,
+        categoryCount: channelResult.data ? categories.length : null,
+        channelCount: channelResult.data ? channels.length : null,
+        permissionRiskIndicators: assessPermissionRisks({
+          channels: riskChannels,
+          guildId: this.#guildId,
+          roles,
+        }),
+        roleCount: roleResult.data ? roles.length : null,
+      },
       facts: {
+        activeThreads: threadResult.data ? activeThreads : null,
         categories: channelResult.data ? categories : null,
         channels: channelResult.data ? channels : null,
         roles: roleResult.data ? roles : null,
-        activeThreads: threadResult.data ? activeThreads : null,
       },
-      calculations: {
-        categoryCount: channelResult.data ? categories.length : null,
-        channelCount: channelResult.data ? channels.length : null,
-        roleCount: roleResult.data ? roles.length : null,
-        activeThreadCount: threadResult.data ? activeThreads.length : null,
-        permissionRiskIndicators: assessPermissionRisks({
-          guildId: this.#guildId,
-          roles,
-          channels: riskChannels,
-        }),
-      },
+      retrievedAt: this.#options.now().toISOString(),
+      source: SOURCE,
       unavailable: [
         ...channelResult.unavailable,
         ...roleResult.unavailable,
@@ -380,8 +380,8 @@ export class DiscordReader {
     const channels = eligibleChannels.slice(0, this.#options.maxChannels);
     const plans = channels.map(channel => ({
       channel,
-      missingPermission: missingMessagePermission(channel, permissionContext),
       messageLimit: 0,
+      missingPermission: missingMessagePermission(channel, permissionContext),
     }));
     const readablePlans = plans.filter(plan => !plan.missingPermission);
     const messageLimits = allocateMessageLimits(
@@ -399,14 +399,14 @@ export class DiscordReader {
       (plan): Promise<ChannelScanResult> => {
         if (plan.missingPermission) {
           return Promise.resolve({
+            messageLimit: 0,
+            requestCount: 0,
             scan: {
               ...channelIdentity(plan.channel),
-              status: "unavailable",
               messages: [],
               reason: plan.missingPermission,
+              status: "unavailable",
             },
-            requestCount: 0,
-            messageLimit: 0,
           });
         }
         return this.#scanChannelMessages(
@@ -419,9 +419,9 @@ export class DiscordReader {
     const scans = scanResults.map(result => result.scan);
     const calculations = calculateMessageActivity(scans, observationPeriod);
     const unavailable = calculations.unavailableChannels.map(channel => ({
-      scope: `channel:${channel.channelId}`,
       reason: channel.reason,
       requiredPermissions: requiredPermissionsForMessageReason(channel.reason),
+      scope: `channel:${channel.channelId}`,
     }));
     const scannedChannelCount = scanResults.filter(
       result => result.requestCount > 0,
@@ -432,29 +432,29 @@ export class DiscordReader {
       || scannedChannelCount < readablePlans.length;
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
-      observationPeriod,
+      calculations,
       facts: {
         channels: scanResults.map(({ scan, requestCount, messageLimit }) => ({
-          id: scan.channelId,
-          name: scan.channelName,
           availability: scan.status,
           fetchedMessageCount: scan.messages.length,
-          requestCount,
+          id: scan.channelId,
           messageLimit,
+          name: scan.channelName,
+          requestCount,
         })),
       },
-      calculations,
+      observationPeriod,
+      retrievedAt: this.#options.now().toISOString(),
       scan: {
         eligibleChannelCount: eligibleChannels.length,
-        selectedChannelCount: channels.length,
-        scannedChannelCount,
         maxChannels: this.#options.maxChannels,
         maxMessagesPerChannel: this.#options.maxMessagesPerChannel,
         maxTotalMessages: this.#options.maxTotalMessages,
+        scannedChannelCount,
+        selectedChannelCount: channels.length,
         truncated,
       },
+      source: SOURCE,
       unavailable,
     };
   }
@@ -484,8 +484,8 @@ export class DiscordReader {
         if (missingPermission) {
           return Promise.resolve({
             ...channelIdentity(channel),
-            status: "unavailable" as const,
             reason: missingPermission,
+            status: "unavailable" as const,
           });
         }
         return this.#latestVisibleMessage(channel);
@@ -496,25 +496,25 @@ export class DiscordReader {
       thresholdDays: inactiveDays,
     });
     const unavailable = calculations.unavailableChannels.map(channel => ({
-      scope: `channel:${channel.channelId}`,
       reason: channel.reason,
       requiredPermissions: requiredPermissionsForMessageReason(channel.reason),
+      scope: `channel:${channel.channelId}`,
     }));
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
-      observationPeriod,
+      calculations,
       facts: {
         latestVisibleMessages: observations,
       },
-      calculations,
+      observationPeriod,
+      retrievedAt: this.#options.now().toISOString(),
       scan: {
         eligibleChannelCount: eligibleChannels.length,
-        scannedChannelCount: channels.length,
         maxChannels: this.#options.maxChannels,
+        scannedChannelCount: channels.length,
         truncated: eligibleChannels.length > channels.length,
       },
+      source: SOURCE,
       unavailable,
     };
   }
@@ -545,23 +545,18 @@ export class DiscordReader {
                   "scheduled event.entity_metadata",
                 );
           return {
-            id: expectString(event.id, "scheduled event.id"),
-            name: expectString(event.name, "scheduled event.name"),
-            description: optionalNullableString(
-              event.description,
-              "scheduled event.description",
-            ),
             channelId: optionalNullableString(
               event.channel_id,
               "scheduled event.channel_id",
             ),
-            scheduledStartTime: expectString(
-              event.scheduled_start_time,
-              "scheduled event.scheduled_start_time",
+            description: optionalNullableString(
+              event.description,
+              "scheduled event.description",
             ),
-            scheduledEndTime: optionalNullableString(
-              event.scheduled_end_time,
-              "scheduled event.scheduled_end_time",
+            id: expectString(event.id, "scheduled event.id"),
+            interestedUserCount: optionalNumber(
+              event.user_count,
+              "scheduled event.user_count",
             ),
             location: metadata
               ? optionalNullableString(
@@ -569,12 +564,17 @@ export class DiscordReader {
                   "scheduled event.location",
                 )
               : undefined,
+            name: expectString(event.name, "scheduled event.name"),
+            scheduledEndTime: optionalNullableString(
+              event.scheduled_end_time,
+              "scheduled event.scheduled_end_time",
+            ),
+            scheduledStartTime: expectString(
+              event.scheduled_start_time,
+              "scheduled event.scheduled_start_time",
+            ),
             status: scheduledEventStatusName(
               expectNumber(event.status, "scheduled event.status"),
-            ),
-            interestedUserCount: optionalNumber(
-              event.user_count,
-              "scheduled event.user_count",
             ),
           };
         })
@@ -590,27 +590,27 @@ export class DiscordReader {
         );
 
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
-        observedAt,
-        facts: { events },
         calculations: { upcomingEventCount: events.length },
+        facts: { events },
+        observedAt,
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [] as UnavailableMetric[],
       };
     } catch (error) {
       if (!isHiddenOrMissingPermission(error)) throw error;
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
-        observedAt,
-        facts: { events: null },
         calculations: { upcomingEventCount: null },
+        facts: { events: null },
+        observedAt,
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [
           {
-            scope: "scheduled-events",
             reason:
               "Discord did not allow this bot to view guild scheduled events.",
             requiredPermissions: ["View Channel for event channels"],
+            scope: "scheduled-events",
           },
         ] satisfies UnavailableMetric[],
       };
@@ -677,21 +677,21 @@ export class DiscordReader {
     } catch (error) {
       if (!isHiddenOrMissingPermission(error)) throw error;
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
-        observationPeriod,
         facts: { entries: null },
+        observationPeriod,
+        retrievedAt: this.#options.now().toISOString(),
         scan: {
           fetchedEntryCount: 0,
           maxEntries: this.#options.maxAuditEntries,
           truncated: false,
         },
+        source: SOURCE,
         unavailable: [
           {
-            scope: "audit-log",
             reason:
               "Discord did not allow this bot to view the guild audit log.",
             requiredPermissions: ["View Audit Log"],
+            scope: "audit-log",
           },
         ] satisfies UnavailableMetric[],
       };
@@ -707,39 +707,39 @@ export class DiscordReader {
         "audit log entry.user_id",
       );
       return {
+        actionName: auditLogActionName(actionType),
+        actionType,
+        actorId: userId,
+        actorUsername: userId ? users.get(userId) : undefined,
+        changeCount: Array.isArray(entry.changes) ? entry.changes.length : 0,
         id: expectString(entry.id, "audit log entry.id"),
         occurredAt: snowflakeTimestamp(
           expectString(entry.id, "audit log entry.id"),
         ),
-        actionType,
-        actionName: auditLogActionName(actionType),
-        actorId: userId,
-        actorUsername: userId ? users.get(userId) : undefined,
+        reason: optionalNullableString(entry.reason, "audit log entry.reason"),
         targetId: optionalNullableString(
           entry.target_id,
           "audit log entry.target_id",
         ),
-        reason: optionalNullableString(entry.reason, "audit log entry.reason"),
-        changeCount: Array.isArray(entry.changes) ? entry.changes.length : 0,
       };
     });
     const truncated =
       entries.length >= this.#options.maxAuditEntries && !reachedPeriodStart;
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
-      observationPeriod,
-      facts: { entries: facts },
       calculations: {
         actionCount: facts.length,
         actionsByType: countBy(facts.map(entry => entry.actionName)),
       },
+      facts: { entries: facts },
+      observationPeriod,
+      retrievedAt: this.#options.now().toISOString(),
       scan: {
         fetchedEntryCount: facts.length,
         maxEntries: this.#options.maxAuditEntries,
         truncated,
       },
+      source: SOURCE,
       unavailable: [] as UnavailableMetric[],
     };
   }
@@ -761,7 +761,7 @@ export class DiscordReader {
       if (!isHiddenOrMissingPermission(error)) throw error;
       return {
         data: undefined,
-        unavailable: [{ scope, reason, requiredPermissions }],
+        unavailable: [{ reason, requiredPermissions, scope }],
       };
     }
   }
@@ -794,7 +794,7 @@ export class DiscordReader {
       }
     }
 
-    return { guildId: this.#guildId, userId, memberRoleIds, basePermissions };
+    return { basePermissions, guildId: this.#guildId, memberRoleIds, userId };
   }
 
   #periodForDays(
@@ -809,7 +809,7 @@ export class DiscordReader {
     }
     const end = this.#options.now();
     const start = new Date(end.getTime() - days * MILLISECONDS_PER_DAY);
-    return { start: start.toISOString(), end: end.toISOString() };
+    return { end: end.toISOString(), start: start.toISOString() };
   }
 
   #messageChannels(
@@ -823,10 +823,10 @@ export class DiscordReader {
       .map(channel => ({
         id: expectString(channel.id, "channel.id"),
         name: expectString(channel.name, "channel.name"),
-        position: expectNumber(channel.position, "channel.position"),
         permissionOverwrites: mapPermissionOverwrites(
           channel.permission_overwrites,
         ),
+        position: expectNumber(channel.position, "channel.position"),
       }))
       .toSorted(
         (left, right) =>
@@ -851,9 +851,9 @@ export class DiscordReader {
         );
         if (requestLimit <= 0) {
           return {
-            scan: { ...channelIdentity(channel), status: "capped", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "capped" },
           };
         }
 
@@ -871,9 +871,9 @@ export class DiscordReader {
         ).slice(0, requestLimit);
         if (rawPage.length === 0) {
           return {
-            scan: { ...channelIdentity(channel), status: "complete", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "complete" },
           };
         }
 
@@ -891,30 +891,30 @@ export class DiscordReader {
           || Date.parse(oldest.timestamp) <= Date.parse(period.start)
         ) {
           return {
-            scan: { ...channelIdentity(channel), status: "complete", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "complete" },
           };
         }
         if (messages.length >= messageLimit) {
           return {
-            scan: { ...channelIdentity(channel), status: "capped", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "capped" },
           };
         }
         if (rawPage.length < requestLimit) {
           return {
-            scan: { ...channelIdentity(channel), status: "complete", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "complete" },
           };
         }
         if (oldest.id === before) {
           return {
-            scan: { ...channelIdentity(channel), status: "capped", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "capped" },
           };
         }
         before = oldest.id;
@@ -922,21 +922,21 @@ export class DiscordReader {
     } catch (error) {
       if (!isHiddenOrMissingPermission(error)) throw error;
       return {
+        messageLimit,
+        requestCount,
         scan: {
           ...channelIdentity(channel),
-          status: "unavailable",
           messages: [],
           reason: "Missing View Channel or Read Message History permission.",
+          status: "unavailable",
         },
-        requestCount,
-        messageLimit,
       };
     }
 
     return {
-      scan: { ...channelIdentity(channel), status: "capped", messages },
-      requestCount,
       messageLimit,
+      requestCount,
+      scan: { ...channelIdentity(channel), messages, status: "capped" },
     };
   }
 
@@ -952,7 +952,6 @@ export class DiscordReader {
       const first = messages[0];
       return {
         ...channelIdentity(channel),
-        status: "available",
         latestVisibleMessageAt:
           first === undefined
             ? null
@@ -961,13 +960,14 @@ export class DiscordReader {
                   .timestamp,
                 "message.timestamp",
               ),
+        status: "available",
       };
     } catch (error) {
       if (!isHiddenOrMissingPermission(error)) throw error;
       return {
         ...channelIdentity(channel),
-        status: "unavailable",
         reason: "Missing View Channel or Read Message History permission.",
+        status: "unavailable",
       };
     }
   }
@@ -1103,10 +1103,10 @@ function mapPermissionOverwrites(value: unknown) {
   return expectArray(value, "channel.permission_overwrites").map(overwrite => {
     const record = expectRecord(overwrite, "channel permission overwrite");
     return {
-      id: expectString(record.id, "channel permission overwrite.id"),
-      type: expectNumber(record.type, "channel permission overwrite.type"),
       allow: expectString(record.allow, "channel permission overwrite.allow"),
       deny: expectString(record.deny, "channel permission overwrite.deny"),
+      id: expectString(record.id, "channel permission overwrite.id"),
+      type: expectNumber(record.type, "channel permission overwrite.type"),
     };
   });
 }

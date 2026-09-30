@@ -16,8 +16,8 @@ export const memberRoleFilterSchema = v.pipe(
   v.strictObject({
     allOf: roleList,
     anyOf: roleList,
-    noneOf: roleList,
     memberType: v.optional(v.picklist(["all", "humans", "bots"]), "all"),
+    noneOf: roleList,
   }),
   v.check(
     input => input.allOf.length + input.anyOf.length + input.noneOf.length > 0,
@@ -69,14 +69,14 @@ export interface MemberLookupResult {
 const rolesSchema = v.array(v.object({ id: snowflake, name: v.string() }));
 const membersSchema = v.array(
   v.object({
-    user: v.object({
-      id: snowflake,
-      username: v.string(),
-      global_name: v.optional(v.nullable(v.string())),
-      bot: v.optional(v.boolean(), false),
-    }),
     nick: v.optional(v.nullable(v.string())),
     roles: v.array(snowflake),
+    user: v.object({
+      bot: v.optional(v.boolean(), false),
+      global_name: v.optional(v.nullable(v.string())),
+      id: snowflake,
+      username: v.string(),
+    }),
   }),
 );
 
@@ -107,9 +107,9 @@ export function resolveMemberRoles(
       const role = candidates[0];
       if (candidates.length !== 1 || !role) {
         issues.push({
-          role: reference,
-          reason: candidates.length ? "ambiguous_role" : "unknown_role",
           candidates,
+          reason: candidates.length ? "ambiguous_role" : "unknown_role",
+          role: reference,
         });
       } else {
         selected.set(role.id, role);
@@ -120,8 +120,8 @@ export function resolveMemberRoles(
   const filter: ResolvedMemberRoles = {
     allOf: resolve(parsed.allOf),
     anyOf: resolve(parsed.anyOf),
-    noneOf: resolve(parsed.noneOf),
     memberType: parsed.memberType,
+    noneOf: resolve(parsed.noneOf),
   };
   const excluded = new Set(filter.noneOf.map(role => role.id));
   const contradictions = filter.allOf.filter(role => excluded.has(role.id));
@@ -133,9 +133,9 @@ export function resolveMemberRoles(
   }
   for (const role of contradictions) {
     issues.push({
-      role: role.name,
-      reason: "contradictory_roles",
       candidates: [role],
+      reason: "contradictory_roles",
+      role: role.name,
     });
   }
   return { filter: issues.length ? null : filter, issues };
@@ -203,20 +203,20 @@ export async function findMembersByRoles(
   ): MemberLookupResult {
     members.sort((left, right) => compareIds(left.id, right.id));
     return {
-      source: "Discord REST API v10",
-      guildId,
-      startedAt,
-      retrievedAt: now().toISOString(),
-      status,
       filter,
-      roles,
-      scannedMemberCount,
-      maxMembers,
+      guildId,
       matchedMemberCount:
         status === "complete" || status === "partial" ? members.length : null,
+      maxMembers,
       members,
       reason,
       requiredAccess,
+      retrievedAt: now().toISOString(),
+      roles,
+      scannedMemberCount,
+      source: "Discord REST API v10",
+      startedAt,
+      status,
     };
   }
 
@@ -264,12 +264,12 @@ export async function findMembersByRoles(
         seenMembers.add(value.user.id);
         scannedMemberCount++;
         const member: MatchedMember = {
-          id: value.user.id,
-          username: value.user.username,
           displayName:
             value.nick ?? value.user.global_name ?? value.user.username,
+          id: value.user.id,
           isBot: value.user.bot,
           roleIds: value.roles,
+          username: value.user.username,
         };
         if (matchesMemberRoles(member, filter, guildId)) members.push(member);
       }

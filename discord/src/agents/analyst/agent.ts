@@ -35,8 +35,8 @@ Answering rules:
 export function DiscordAnalyst() {
   useModel(MODEL, { thinkingLevel: "low" });
   useResponseStart(() => ({
-    timestamp: new Date().toISOString(),
     model: MODEL,
+    timestamp: new Date().toISOString(),
   }));
   useDiscordTools(getDiscordReader());
 

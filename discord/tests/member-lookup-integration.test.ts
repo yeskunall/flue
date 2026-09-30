@@ -31,23 +31,23 @@ test("a 30k-member server returns the full filtered count with a bounded preview
           (_, index) => {
             const n = offset + index + 1;
             return {
-              user: {
-                id: String(baseId + BigInt(n)),
-                username: `member${n}`,
-                global_name: null,
-                avatar: null,
-                discriminator: "0",
-                bot: n % 10 === 0,
-              },
+              deaf: false,
+              flags: 0,
+              joined_at: "2026-01-01T00:00:00Z",
+              mute: false,
+              nick: null,
               roles: [
                 ...(n % 2 === 0 ? [verified] : []),
                 ...(n % 6 === 0 ? [muted] : []),
               ],
-              nick: null,
-              joined_at: "2026-01-01T00:00:00Z",
-              flags: 0,
-              deaf: false,
-              mute: false,
+              user: {
+                avatar: null,
+                bot: n % 10 === 0,
+                discriminator: "0",
+                global_name: null,
+                id: String(baseId + BigInt(n)),
+                username: `member${n}`,
+              },
             };
           },
         ).toReversed();
@@ -61,11 +61,11 @@ test("a 30k-member server returns the full filtered count with a bounded preview
       data: {
         allOf: ["Verified"],
         anyOf: [],
-        noneOf: ["Muted"],
         memberType: "humans",
+        noneOf: ["Muted"],
       },
+      log: { error() {}, info() {}, warn() {} },
       toolCallId: "large-member-query",
-      log: { info() {}, warn() {}, error() {} },
     })) as string,
   );
   expect(memberRequests).toBe(31);

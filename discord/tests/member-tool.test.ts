@@ -8,38 +8,38 @@ function lookup(
 ): MemberLookupResult {
   const role = { id: "100000000000000002", name: "Verified" };
   const members = Array.from({ length: 40 }, (_, index) => ({
-    id: String(200000000000000000n + BigInt(index)),
-    username: `member${index}`,
     displayName: `Member ${index}`,
+    id: String(200000000000000000n + BigInt(index)),
     isBot: false,
     roleIds: [role.id],
+    username: `member${index}`,
   }));
   return {
-    source: "Discord REST API v10",
+    filter: { allOf: [role], anyOf: [], memberType: "all", noneOf: [] },
     guildId: "100000000000000001",
-    startedAt: "2026-09-01T12:00:00Z",
-    retrievedAt: "2026-09-01T12:00:01Z",
-    status,
-    filter: { allOf: [role], anyOf: [], noneOf: [], memberType: "all" },
-    roles: [role],
-    members: status === "unavailable" ? [] : members,
     matchedMemberCount: status === "unavailable" ? null : 40,
-    scannedMemberCount: status === "unavailable" ? 0 : 40,
     maxMembers: 100_000,
+    members: status === "unavailable" ? [] : members,
     requiredAccess:
       status === "unavailable" ? ["GUILD_MEMBERS (Server Members intent)"] : [],
+    retrievedAt: "2026-09-01T12:00:01Z",
+    roles: [role],
+    scannedMemberCount: status === "unavailable" ? 0 : 40,
+    source: "Discord REST API v10",
+    startedAt: "2026-09-01T12:00:00Z",
+    status,
   };
 }
 
 const context = {
-  toolCallId: "member-query",
   data: {
     allOf: ["Verified"],
     anyOf: [],
-    noneOf: [],
     memberType: "all" as const,
+    noneOf: [],
   },
-  log: { info() {}, warn() {}, error() {} },
+  log: { error() {}, info() {}, warn() {} },
+  toolCallId: "member-query",
 };
 
 describe("Flue member lookup result", () => {
@@ -85,8 +85,8 @@ describe("Flue member lookup result", () => {
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => ({
         ...lookup(),
-        members: [],
         matchedMemberCount: 0,
+        members: [],
       }),
     });
     const result = JSON.parse((await tool.run(context)) as string);
