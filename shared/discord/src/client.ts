@@ -8,7 +8,9 @@ import { DiscordReader } from "#/reader.ts";
 let reader: DiscordReader | undefined;
 
 export function getDiscordReader(): DiscordReader {
-  if (reader) return reader;
+  if (reader) {
+    return reader;
+  }
 
   const env = createEnv({
     emptyStringAsUndefined: true,

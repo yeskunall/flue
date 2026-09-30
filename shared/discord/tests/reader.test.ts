@@ -71,8 +71,9 @@ function withBotPermissions(
 describe("DiscordReader server data", () => {
   test("fetches a trusted guild overview with approximate counts and a retrieval timestamp", async () => {
     const discord = reader(async (route, options) => {
-      if (route !== Routes.guild("123456789012345678"))
+      if (route !== Routes.guild("123456789012345678")) {
         throw new Error(`Unexpected route: ${route}`);
+      }
       if (queryValue(options, "with_counts") !== "true") {
         throw new Error(
           "The overview request did not ask Discord for approximate counts.",
@@ -350,7 +351,9 @@ describe("DiscordReader message scans", () => {
             },
           ];
         }
-        if (route === Routes.channelMessages("visible")) return [];
+        if (route === Routes.channelMessages("visible")) {
+          return [];
+        }
         if (route === Routes.channelMessages("private")) {
           throw Object.assign(new Error("Missing Permissions"), {
             code: 50_013,
@@ -524,7 +527,9 @@ describe("DiscordReader message scans", () => {
     let clockCalls = 0;
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
-        if (route === Routes.guildChannels("123456789012345678")) return [];
+        if (route === Routes.guildChannels("123456789012345678")) {
+          return [];
+        }
         throw new Error(`Unexpected route: ${route}`);
       }),
       {

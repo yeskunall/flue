@@ -208,7 +208,9 @@ export function calculateMessageActivity(
       return timestamp >= start && timestamp <= end ? total + 1 : total;
     }, 0);
     visibleMessageCount += count;
-    if (scan.status === "capped") cappedChannels.push(scan.channelName);
+    if (scan.status === "capped") {
+      cappedChannels.push(scan.channelName);
+    }
     ranking.push({
       channelId: scan.channelId,
       channelName: scan.channelName,
@@ -296,10 +298,14 @@ export function assessPermissionRisks(input: {
   const risks: PermissionRisk[] = [];
 
   for (const role of input.roles) {
-    if (role.managed) continue;
+    if (role.managed) {
+      continue;
+    }
     const permissions = BigInt(role.permissions);
     for (const riskPermission of ROLE_RISK_PERMISSIONS) {
-      if (!hasPermission(permissions, riskPermission.flag)) continue;
+      if (!hasPermission(permissions, riskPermission.flag)) {
+        continue;
+      }
       const isEveryone = role.id === input.guildId;
       risks.push({
         explanation: isEveryone
@@ -323,10 +329,14 @@ export function assessPermissionRisks(input: {
     const everyoneOverwrite = channel.permission_overwrites?.find(
       overwrite => overwrite.type === 0 && overwrite.id === input.guildId,
     );
-    if (!everyoneOverwrite) continue;
+    if (!everyoneOverwrite) {
+      continue;
+    }
     const allowed = BigInt(everyoneOverwrite.allow);
     for (const riskPermission of CHANNEL_RISK_PERMISSIONS) {
-      if (!hasPermission(allowed, riskPermission.flag)) continue;
+      if (!hasPermission(allowed, riskPermission.flag)) {
+        continue;
+      }
       risks.push({
         explanation:
           "The @everyone channel override grants a high-impact permission to every server member.",

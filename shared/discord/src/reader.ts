@@ -215,7 +215,9 @@ export class DiscordReader {
         unavailable: [] as UnavailableMetric[],
       };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         facts: null,
         retrievedAt: this.#options.now().toISOString(),
@@ -598,7 +600,9 @@ export class DiscordReader {
         unavailable: [] as UnavailableMetric[],
       };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         calculations: { upcomingEventCount: null },
         facts: { events: null },
@@ -634,7 +638,9 @@ export class DiscordReader {
           this.#options.maxAuditEntries - entries.length,
         );
         const query = new URLSearchParams({ limit: String(limit) });
-        if (before) query.set("before", before);
+        if (before) {
+          query.set("before", before);
+        }
         const page = await this.#get<RESTGetAPIAuditLogResult>(
           Routes.guildAuditLog(this.#guildId),
           query,
@@ -654,7 +660,9 @@ export class DiscordReader {
           pageRecord.audit_log_entries,
           "audit log.audit_log_entries",
         ).map(entry => expectRecord(entry, "audit log entry"));
-        if (pageEntries.length === 0) break;
+        if (pageEntries.length === 0) {
+          break;
+        }
 
         for (const entry of pageEntries) {
           const id = expectString(entry.id, "audit log entry.id");
@@ -664,18 +672,24 @@ export class DiscordReader {
             break;
           }
           entries.push(entry);
-          if (entries.length >= this.#options.maxAuditEntries) break;
+          if (entries.length >= this.#options.maxAuditEntries) {
+            break;
+          }
         }
 
         const nextBefore = expectString(
           pageEntries.at(-1)?.id,
           "oldest audit log entry.id",
         );
-        if (nextBefore === before || pageEntries.length < limit) break;
+        if (nextBefore === before || pageEntries.length < limit) {
+          break;
+        }
         before = nextBefore;
       }
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         facts: { entries: null },
         observationPeriod,
@@ -758,7 +772,9 @@ export class DiscordReader {
     try {
       return { data: await this.#get<T>(route), unavailable: [] };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         data: undefined,
         unavailable: [{ reason, requiredPermissions, scope }],
@@ -858,7 +874,9 @@ export class DiscordReader {
         }
 
         const query = new URLSearchParams({ limit: String(requestLimit) });
-        if (before) query.set("before", before);
+        if (before) {
+          query.set("before", before);
+        }
         requestCount += 1;
         const page = await this.#get<RESTGetAPIChannelMessagesResult>(
           Routes.channelMessages(channel.id),
@@ -920,7 +938,9 @@ export class DiscordReader {
         before = oldest.id;
       }
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         messageLimit,
         requestCount,
@@ -963,7 +983,9 @@ export class DiscordReader {
         status: "available",
       };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         ...channelIdentity(channel),
         reason: "Missing View Channel or Read Message History permission.",
@@ -1005,7 +1027,9 @@ function effectiveChannelPermissions(
   const everyone = channel.permissionOverwrites.find(
     overwrite => overwrite.type === 0 && overwrite.id === context.guildId,
   );
-  if (everyone) permissions = applyOverwrite(permissions, everyone);
+  if (everyone) {
+    permissions = applyOverwrite(permissions, everyone);
+  }
 
   let roleAllow = 0n;
   let roleDeny = 0n;
@@ -1024,7 +1048,9 @@ function effectiveChannelPermissions(
   const member = channel.permissionOverwrites.find(
     overwrite => overwrite.type === 1 && overwrite.id === context.userId,
   );
-  if (member) permissions = applyOverwrite(permissions, member);
+  if (member) {
+    permissions = applyOverwrite(permissions, member);
+  }
   return permissions;
 }
 
@@ -1048,7 +1074,9 @@ function allocateMessageLimits(
   totalLimit: number,
   perChannelLimit: number,
 ): number[] {
-  if (channelCount === 0) return [];
+  if (channelCount === 0) {
+    return [];
+  }
 
   const evenLimit = Math.min(
     perChannelLimit,
@@ -1068,7 +1096,9 @@ function allocateMessageLimits(
 }
 
 function requiredPermissionsForMessageReason(reason: string): string[] {
-  if (reason === "Missing View Channel permission.") return ["View Channel"];
+  if (reason === "Missing View Channel permission.") {
+    return ["View Channel"];
+  }
   if (reason === "Missing Read Message History permission.") {
     return ["Read Message History"];
   }
@@ -1090,7 +1120,9 @@ async function mapWithConcurrency<T, R>(
         const index = nextIndex;
         nextIndex += 1;
         const value = values[index];
-        if (value !== undefined) results[index] = await operation(value);
+        if (value !== undefined) {
+          results[index] = await operation(value);
+        }
       }
     },
   );
@@ -1099,7 +1131,9 @@ async function mapWithConcurrency<T, R>(
 }
 
 function mapPermissionOverwrites(value: unknown) {
-  if (value === undefined) return [];
+  if (value === undefined) {
+    return [];
+  }
   return expectArray(value, "channel.permission_overwrites").map(overwrite => {
     const record = expectRecord(overwrite, "channel permission overwrite");
     return {
@@ -1112,7 +1146,9 @@ function mapPermissionOverwrites(value: unknown) {
 }
 
 function isHiddenOrMissingPermission(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
+  if (!error || typeof error !== "object") {
+    return false;
+  }
   const status = "status" in error ? error.status : undefined;
   const code = "code" in error ? error.code : undefined;
   return (
@@ -1161,7 +1197,9 @@ function optionalNullableString(
   value: unknown,
   label: string,
 ): string | null | undefined {
-  if (value === null || value === undefined) return value;
+  if (value === null || value === undefined) {
+    return value;
+  }
   return expectString(value, label);
 }
 
@@ -1214,6 +1252,8 @@ function snowflakeTimestamp(id: string): string {
 
 function countBy(values: readonly string[]): Record<string, number> {
   const counts: Record<string, number> = {};
-  for (const value of values) counts[value] = (counts[value] ?? 0) + 1;
+  for (const value of values) {
+    counts[value] = (counts[value] ?? 0) + 1;
+  }
   return counts;
 }

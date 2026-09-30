@@ -146,8 +146,12 @@ export function matchesMemberRoles(
   filter: ResolvedMemberRoles,
   guildId: string,
 ): boolean {
-  if (filter.memberType === "humans" && member.isBot) return false;
-  if (filter.memberType === "bots" && !member.isBot) return false;
+  if (filter.memberType === "humans" && member.isBot) {
+    return false;
+  }
+  if (filter.memberType === "bots" && !member.isBot) {
+    return false;
+  }
   // Discord omits @everyone from the member's explicit role list.
   const assigned = new Set([guildId, ...member.roleIds]);
   const has = (role: MemberRole) => assigned.has(role.id);
@@ -244,7 +248,9 @@ export async function findMembersByRoles(
       signal.throwIfAborted();
       const limit = Math.min(pageSize, maxMembers - scannedMemberCount);
       const query = new URLSearchParams({ limit: String(limit) });
-      if (after) query.set("after", after);
+      if (after) {
+        query.set("after", after);
+      }
       const page = v.parse(
         membersSchema,
         await getWithinDeadline(
@@ -260,7 +266,9 @@ export async function findMembersByRoles(
         || new Set(ids).size !== ids.length
         || ids.some(id => after !== undefined && BigInt(id) <= BigInt(after));
       for (const value of page.slice(0, limit)) {
-        if (seenMembers.has(value.user.id)) continue;
+        if (seenMembers.has(value.user.id)) {
+          continue;
+        }
         seenMembers.add(value.user.id);
         scannedMemberCount++;
         const member: MatchedMember = {
@@ -271,7 +279,9 @@ export async function findMembersByRoles(
           roleIds: value.roles,
           username: value.user.username,
         };
-        if (matchesMemberRoles(member, filter, guildId)) members.push(member);
+        if (matchesMemberRoles(member, filter, guildId)) {
+          members.push(member);
+        }
       }
       if (invalidPage) {
         return finish(
@@ -279,7 +289,9 @@ export async function findMembersByRoles(
           "Discord returned a repeated or invalid member pagination cursor; the list is incomplete.",
         );
       }
-      if (page.length < limit) return finish("complete");
+      if (page.length < limit) {
+        return finish("complete");
+      }
       after = ids.reduce((highest, id) =>
         compareIds(id, highest) > 0 ? id : highest,
       );
@@ -289,10 +301,14 @@ export async function findMembersByRoles(
       "The 100,000-member safety limit (or a lower configured limit) was reached; the list is incomplete.",
     );
   } catch (error) {
-    if (options.signal?.aborted) throw error;
+    if (options.signal?.aborted) {
+      throw error;
+    }
     // Never accept malformed rows, but preserve matches from already validated pages.
     if (v.isValiError(error)) {
-      if (!scannedMemberCount) throw error;
+      if (!scannedMemberCount) {
+        throw error;
+      }
       return finish(
         "partial",
         "Discord returned malformed member data; the list is incomplete.",
@@ -354,7 +370,9 @@ async function getWithinDeadline(
     signal.throwIfAborted();
     return result;
   } finally {
-    if (onAbort) signal.removeEventListener("abort", onAbort);
+    if (onAbort) {
+      signal.removeEventListener("abort", onAbort);
+    }
   }
 }
 

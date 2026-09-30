@@ -20,8 +20,9 @@ test("a 30k-member server returns the full filtered count with a bounded preview
             { id: muted, name: "Muted" },
           ];
         }
-        if (route !== Routes.guildMembers(guildId))
+        if (route !== Routes.guildMembers(guildId)) {
           throw new Error(`Unexpected route: ${route}`);
+        }
         expect(options?.query?.get("limit")).toBe("1000");
         memberRequests++;
         const after = options?.query?.get("after");

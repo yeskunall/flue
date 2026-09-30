@@ -49,9 +49,12 @@ function transport(
 ): DiscordRestTransport {
   return {
     get: async (route, options) => {
-      if (route === Routes.guildRoles(GUILD)) return availableRoles;
-      if (route !== Routes.guildMembers(GUILD))
+      if (route === Routes.guildRoles(GUILD)) {
+        return availableRoles;
+      }
+      if (route !== Routes.guildMembers(GUILD)) {
         throw new Error(`Unexpected route: ${route}`);
+      }
       return getMembers(route, options);
     },
   };
@@ -193,11 +196,15 @@ describe("REST member lookup", () => {
       transport(async (_route, options) => {
         queries.push(options?.query?.toString() ?? "");
         const after = options?.query?.get("after");
-        if (!after)
+        if (!after) {
           return [member(2, [VERIFIED, MUTED]), member(1, [VERIFIED])];
-        if (after === member(2, []).user.id)
+        }
+        if (after === member(2, []).user.id) {
           return [member(3, [STAFF]), member(4, [VERIFIED, STAFF])];
-        if (after === member(4, []).user.id) return [];
+        }
+        if (after === member(4, []).user.id) {
+          return [];
+        }
         throw new Error(`Wrong cursor: ${after}`);
       }),
       GUILD,
@@ -301,7 +308,9 @@ describe("REST member lookup", () => {
   test("labels results partial if a later page is denied", async () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
-        if (!options?.query?.has("after")) return [member(1, [VERIFIED])];
+        if (!options?.query?.has("after")) {
+          return [member(1, [VERIFIED])];
+        }
         throw { code: 50001, status: 403 };
       }),
       GUILD,
@@ -318,8 +327,9 @@ describe("REST member lookup", () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         queries.push(options?.query?.toString() ?? "");
-        if (!options?.query?.has("after"))
+        if (!options?.query?.has("after")) {
           return [member(1, [VERIFIED]), member(2, [VERIFIED])];
+        }
         return [member(3, [VERIFIED])];
       }),
       GUILD,
@@ -400,7 +410,9 @@ describe("REST member lookup", () => {
   test("keeps validated matches as partial if a later page is malformed", async () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
-        if (!options?.query?.has("after")) return [member(1, [VERIFIED])];
+        if (!options?.query?.has("after")) {
+          return [member(1, [VERIFIED])];
+        }
         return [{ roles: null, user: member(2, []).user }];
       }),
       GUILD,
@@ -461,7 +473,9 @@ describe("REST member lookup", () => {
     const outcome: { result?: MemberLookupResult; error?: unknown } = {};
     const lookup = findMembersByRoles(
       transport(async (_route, options) => {
-        if (!options?.query?.has("after")) return [member(1, [VERIFIED])];
+        if (!options?.query?.has("after")) {
+          return [member(1, [VERIFIED])];
+        }
         started.resolve();
         return response.promise;
       }),
