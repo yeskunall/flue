@@ -62,6 +62,7 @@ function transport(
 
 describe("member role filters", () => {
   it("resolves exact names, case-insensitive names, role mentions and IDs", () => {
+    expect.hasAssertions();
     expect(
       resolveMemberRoles(roles, {
         allOf: [" verified ", `<@&${STAFF}>`],
@@ -79,6 +80,7 @@ describe("member role filters", () => {
   });
 
   it("does not silently ignore unknown roles in negative filters", () => {
+    expect.hasAssertions();
     const result = resolveMemberRoles(roles, { noneOf: ["Verifed"] });
     expect(result.filter).toBeNull();
     expect(result.issues).toStrictEqual([
@@ -89,6 +91,7 @@ describe("member role filters", () => {
   it.each(["100000000000000009", "<@&100000000000000009>"])(
     "never substitutes a role name for the explicit identity %s",
     reference => {
+      expect.hasAssertions();
       const result = resolveMemberRoles(
         [...roles, { id: "100000000000000008", name: reference }],
         { noneOf: [reference] },
@@ -101,6 +104,7 @@ describe("member role filters", () => {
   );
 
   it("requires an ID for ambiguous names, but accepts a unique exact-case match", () => {
+    expect.hasAssertions();
     const duplicates = [
       ...roles,
       { id: "100000000000000005", name: "Verified" },
@@ -128,6 +132,7 @@ describe("member role filters", () => {
   });
 
   it("rejects contradictory required and excluded roles", () => {
+    expect.hasAssertions();
     const result = resolveMemberRoles(roles, {
       allOf: ["Verified"],
       noneOf: [VERIFIED],
@@ -163,6 +168,7 @@ describe("member role filters", () => {
   ] as const)(
     "evaluates filter %j against roles %j",
     (input, roleIds, bot, expected) => {
+      expect.hasAssertions();
       const { filter } = resolveMemberRoles(roles, input);
       expect(filter).not.toBeNull();
       expect(matchesMemberRoles({ isBot: bot, roleIds }, filter!, GUILD)).toBe(
@@ -174,6 +180,7 @@ describe("member role filters", () => {
 
 describe("REST member lookup", () => {
   it("the live reader uses its trusted guild and clock for role lookups", async () => {
+    expect.hasAssertions();
     const reader = new DiscordReader(
       transport(async () => [member(1, [VERIFIED])]),
       GUILD,
@@ -191,6 +198,7 @@ describe("REST member lookup", () => {
   });
 
   it("paginates the entire roster and returns all matches with current roles, not just the first page", async () => {
+    expect.hasAssertions();
     const queries: string[] = [];
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
@@ -220,10 +228,17 @@ describe("REST member lookup", () => {
       "limit=2&after=200000000000000002",
       "limit=2&after=200000000000000004",
     ]);
-    expect(result.status).toBe("complete");
-    expect(result.matchedMemberCount).toBe(2);
-    expect(result.scannedMemberCount).toBe(4);
-    expect(result.retrievedAt).toBe("2026-09-01T12:00:00.000Z");
+    expect({
+      matchedMemberCount: result.matchedMemberCount,
+      retrievedAt: result.retrievedAt,
+      scannedMemberCount: result.scannedMemberCount,
+      status: result.status,
+    }).toStrictEqual({
+      matchedMemberCount: 2,
+      retrievedAt: "2026-09-01T12:00:00.000Z",
+      scannedMemberCount: 4,
+      status: "complete",
+    });
     expect(result.members).toStrictEqual([
       {
         displayName: "First member",
@@ -243,6 +258,7 @@ describe("REST member lookup", () => {
   });
 
   it("does not confuse an empty matching list with a failed scan", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async () => [member(1, [STAFF])]),
       GUILD,
@@ -257,6 +273,7 @@ describe("REST member lookup", () => {
   });
 
   it("stops on invalid role selection before any member request", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async () => {
         throw new Error("An unresolved filter must never list members.");
@@ -271,6 +288,7 @@ describe("REST member lookup", () => {
   });
 
   it("reports the Server Members intent requirement rather than zero on a denied list", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async () => {
         throw { code: 50_001, status: 403 };
@@ -287,6 +305,7 @@ describe("REST member lookup", () => {
   });
 
   it("does not blame the member intent when even listing roles is denied", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       {
         get: async () => {
@@ -306,6 +325,7 @@ describe("REST member lookup", () => {
   });
 
   it("labels results partial if a later page is denied", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         if (!options?.query?.has("after")) {
@@ -323,6 +343,7 @@ describe("REST member lookup", () => {
   });
 
   it("bounds roster scanning and reports a partial result at the cap", async () => {
+    expect.hasAssertions();
     const queries: string[] = [];
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
@@ -347,6 +368,7 @@ describe("REST member lookup", () => {
   });
 
   it("a non-advancing page cannot loop forever or duplicate members", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async () => [member(1, [VERIFIED])]),
       GUILD,
@@ -361,6 +383,7 @@ describe("REST member lookup", () => {
   });
 
   it("retains novel matches in a mixed repeated page before stopping partial", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         return !options?.query?.has("after")
@@ -382,6 +405,7 @@ describe("REST member lookup", () => {
   });
 
   it("operational failures are not described as missing permissions", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async () => {
         throw { status: 503 };
@@ -396,6 +420,7 @@ describe("REST member lookup", () => {
   });
 
   it("rejects malformed member data rather than assuming someone lacks a role", async () => {
+    expect.hasAssertions();
     await expect(
       findMembersByRoles(
         transport(async () => [
@@ -411,6 +436,7 @@ describe("REST member lookup", () => {
   });
 
   it("keeps validated matches as partial if a later page is malformed", async () => {
+    expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         if (!options?.query?.has("after")) {
@@ -432,6 +458,7 @@ describe("REST member lookup", () => {
   });
 
   it("caller cancellation settles without waiting for a REST rate-limit sleep", async () => {
+    expect.hasAssertions();
     const controller = new AbortController();
     const started = Promise.withResolvers<void>();
     const response = Promise.withResolvers<unknown>();
@@ -467,6 +494,7 @@ describe("REST member lookup", () => {
   });
 
   it("the time budget returns partial matches even when REST is still rate-limited", async () => {
+    expect.hasAssertions();
     const deadline = new AbortController();
     const timeout = vi
       .spyOn(AbortSignal, "timeout")
@@ -514,6 +542,7 @@ describe("REST member lookup", () => {
     { allOf: Array.from({ length: 26 }, () => "Verified") },
     { allOf: ["Verified"], guildId: "999999999999999999" },
   ])("rejects unsafe input %j without contacting Discord", async input => {
+    expect.hasAssertions();
     await expect(
       findMembersByRoles(
         {

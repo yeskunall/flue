@@ -46,31 +46,43 @@ const context = {
 
 describe("Flue member lookup result", () => {
   it("returns the full count and a bounded preview without file-export fields", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup(),
     });
     const result = JSON.parse((await tool.run(context)) as string);
-    expect(result.members).toBeUndefined();
+    expect({
+      matchedCountIsLowerBound: result.matchedCountIsLowerBound,
+      matchedMemberCount: result.matchedMemberCount,
+      members: result.members,
+      previewTruncated: result.previewTruncated,
+      report: result.report,
+      reportError: result.reportError,
+    }).toStrictEqual({
+      matchedCountIsLowerBound: false,
+      matchedMemberCount: 40,
+      members: undefined,
+      previewTruncated: true,
+      report: undefined,
+      reportError: undefined,
+    });
     expect(result.membersPreview).toHaveLength(25);
     expect(result.membersPreview[24].username).toBe("member24");
-    expect(result.previewTruncated).toBeTruthy();
-    expect(result.matchedMemberCount).toBe(40);
-    expect(result.matchedCountIsLowerBound).toBeFalsy();
-    expect(result.report).toBeUndefined();
-    expect(result.reportError).toBeUndefined();
   });
 
   it("never presents partial matches as a complete server result", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup("partial"),
     });
     const result = JSON.parse((await tool.run(context)) as string);
     expect(result.status).toBe("partial");
-    expect(result.matchedCountIsLowerBound).toBeTruthy();
+    expect(result.matchedCountIsLowerBound).toBe(true);
     expect(result.reportError).toBeUndefined();
   });
 
   it("returns unavailable rather than zero when member access is denied", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup("unavailable"),
     });
@@ -84,6 +96,7 @@ describe("Flue member lookup result", () => {
   });
 
   it("returns a real zero count when a complete scan finds no matching members", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => ({
         ...lookup(),
@@ -92,11 +105,19 @@ describe("Flue member lookup result", () => {
       }),
     });
     const result = JSON.parse((await tool.run(context)) as string);
-    expect(result.status).toBe("complete");
-    expect(result.matchedMemberCount).toBe(0);
+    expect({
+      matchedMemberCount: result.matchedMemberCount,
+      previewTruncated: result.previewTruncated,
+      report: result.report,
+      reportError: result.reportError,
+      status: result.status,
+    }).toStrictEqual({
+      matchedMemberCount: 0,
+      previewTruncated: false,
+      report: undefined,
+      reportError: undefined,
+      status: "complete",
+    });
     expect(result.membersPreview).toStrictEqual([]);
-    expect(result.report).toBeUndefined();
-    expect(result.reportError).toBeUndefined();
-    expect(result.previewTruncated).toBeFalsy();
   });
 });

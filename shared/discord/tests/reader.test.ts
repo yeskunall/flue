@@ -70,6 +70,7 @@ function withBotPermissions(
 
 describe("DiscordReader server data", () => {
   it("fetches a trusted guild overview with approximate counts and a retrieval timestamp", async () => {
+    expect.hasAssertions();
     const discord = reader(async (route, options) => {
       if (route !== Routes.guild("123456789012345678")) {
         throw new Error(`Unexpected route: ${route}`);
@@ -114,6 +115,7 @@ describe("DiscordReader server data", () => {
   });
 
   it("normalizes channels, categories, roles, active threads, and calculated permission risks", async () => {
+    expect.hasAssertions();
     const discord = reader(async route => {
       if (route === Routes.guildChannels("123456789012345678")) {
         return [
@@ -214,6 +216,7 @@ describe("DiscordReader server data", () => {
   });
 
   it("uses null rather than zero when server structure is unavailable", async () => {
+    expect.hasAssertions();
     const discord = reader(async route => {
       if (
         route === Routes.guildChannels("123456789012345678")
@@ -252,6 +255,7 @@ describe("DiscordReader server data", () => {
 
 describe("DiscordReader message scans", () => {
   it("scans only message-capable channels and reports capped counts as lower bounds", async () => {
+    expect.hasAssertions();
     const discord = reader(
       withBotPermissions(
         READABLE_CHANNEL_PERMISSIONS,
@@ -331,6 +335,7 @@ describe("DiscordReader message scans", () => {
   });
 
   it("keeps an unreadable channel unavailable without failing the activity result", async () => {
+    expect.hasAssertions();
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
         if (route === Routes.guildChannels("123456789012345678")) {
@@ -385,6 +390,7 @@ describe("DiscordReader message scans", () => {
   });
 
   it("does not mistake an empty response for zero activity when Read Message History is missing", async () => {
+    expect.hasAssertions();
     const discord = reader(
       withBotPermissions(
         PermissionFlagsBits.ViewChannel.toString(),
@@ -433,6 +439,7 @@ describe("DiscordReader message scans", () => {
   });
 
   it("treats Administrator as granting message-read permissions", async () => {
+    expect.hasAssertions();
     let messageRequests = 0;
     const discord = reader(
       withBotPermissions(
@@ -473,6 +480,7 @@ describe("DiscordReader message scans", () => {
   });
 
   it("allocates the global message budget across concurrent channels", async () => {
+    expect.hasAssertions();
     const requestedChannels: string[] = [];
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
@@ -524,6 +532,7 @@ describe("DiscordReader message scans", () => {
   });
 
   it("records retrieval completion separately from the observation cutoff", async () => {
+    expect.hasAssertions();
     let clockCalls = 0;
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
@@ -549,6 +558,7 @@ describe("DiscordReader message scans", () => {
   });
 
   it("uses one latest visible message per channel to calculate inactivity", async () => {
+    expect.hasAssertions();
     const discord = reader(
       withBotPermissions(
         READABLE_CHANNEL_PERMISSIONS,
@@ -618,6 +628,7 @@ describe("DiscordReader message scans", () => {
 
 describe("DiscordReader optional resources", () => {
   it("returns upcoming scheduled events as fetched facts", async () => {
+    expect.hasAssertions();
     const discord = reader(async (route, options) => {
       if (route !== Routes.guildScheduledEvents("123456789012345678")) {
         throw new Error(`Unexpected route: ${route}`);
@@ -664,6 +675,7 @@ describe("DiscordReader optional resources", () => {
   });
 
   it("uses null rather than zero when scheduled events are unavailable", async () => {
+    expect.hasAssertions();
     const discord = reader(async route => {
       if (route === Routes.guildScheduledEvents("123456789012345678")) {
         throw Object.assign(new Error("Missing Access"), {
@@ -682,6 +694,7 @@ describe("DiscordReader optional resources", () => {
   });
 
   it("normalizes recent audit-log actions and actor names", async () => {
+    expect.hasAssertions();
     const occurredAt = "2026-08-26T10:00:00.000Z";
     const entryId = (
       (BigInt(Date.parse(occurredAt)) - 1_420_070_400_000n)
@@ -737,6 +750,7 @@ describe("DiscordReader optional resources", () => {
   });
 
   it("turns a missing View Audit Log permission into metric-level unavailability", async () => {
+    expect.hasAssertions();
     const discord = reader(async route => {
       if (route === Routes.guildAuditLog("123456789012345678")) {
         throw Object.assign(new Error("Missing Permissions"), {

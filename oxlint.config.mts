@@ -58,6 +58,9 @@ export default defineConfig({
       "warn",
       { allowedPrefixes: ["DiscordReader", "Flue", "REST"] },
     ],
+    "vitest/prefer-to-be-falsy": "off",
+    "vitest/prefer-to-be-truthy": "off",
+    "vitest/prefer-strict-boolean-matchers": "warn",
     "vitest/valid-expect": ["warn", { maxArgs: 2 }],
   },
 });

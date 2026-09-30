@@ -18,6 +18,7 @@ const PERIOD = {
 
 describe("calculateMessageActivity", () => {
   it("counts only messages inside the observation period and ranks ties by channel name", () => {
+    expect.hasAssertions();
     const scans: ChannelMessageScan[] = [
       {
         channelId: "1",
@@ -62,6 +63,7 @@ describe("calculateMessageActivity", () => {
   });
 
   it("marks capped counts as lower bounds and keeps unavailable channels out of the ranking", () => {
+    expect.hasAssertions();
     const scans: ChannelMessageScan[] = [
       {
         channelId: "1",
@@ -105,6 +107,7 @@ describe("calculateMessageActivity", () => {
 
 describe("calculateInactiveChannels", () => {
   it("separates inactive, empty, active, and permission-blocked channels", () => {
+    expect.hasAssertions();
     const observations: LatestMessageObservation[] = [
       {
         channelId: "1",
@@ -163,6 +166,7 @@ describe("calculateInactiveChannels", () => {
 
 describe("assessPermissionRisks", () => {
   it("flags high-impact assignable roles and everyone channel overrides without alleging abuse", () => {
+    expect.hasAssertions();
     const administrator = PermissionFlagsBits.Administrator.toString();
     const mentionEveryone = PermissionFlagsBits.MentionEveryone.toString();
     const manageMessages = PermissionFlagsBits.ManageMessages.toString();
