@@ -92,7 +92,7 @@ describe("Flue member lookup result", () => {
     const result = JSON.parse((await tool.run(context)) as string);
     expect(result.status).toBe("complete");
     expect(result.matchedMemberCount).toBe(0);
-    expect(result.membersPreview).toEqual([]);
+    expect(result.membersPreview).toStrictEqual([]);
     expect(result.report).toBeUndefined();
     expect(result.reportError).toBeUndefined();
     expect(result.previewTruncated).toBe(false);

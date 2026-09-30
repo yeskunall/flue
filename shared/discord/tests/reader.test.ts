@@ -94,7 +94,7 @@ describe("DiscordReader server data", () => {
       };
     });
 
-    await expect(discord.getServerOverview()).resolves.toEqual({
+    await expect(discord.getServerOverview()).resolves.toStrictEqual({
       facts: {
         approximateMemberCount: 240,
         approximatePresenceCount: 37,
@@ -461,7 +461,7 @@ describe("DiscordReader message scans", () => {
     const result = await discord.getMessageActivity(7);
 
     expect(messageRequests).toBe(1);
-    expect(result.calculations.ranking).toEqual([
+    expect(result.calculations.ranking).toStrictEqual([
       {
         channelId: "admin-visible",
         channelName: "admin-visible",
@@ -469,7 +469,7 @@ describe("DiscordReader message scans", () => {
         visibleMessageCount: 1,
       },
     ]);
-    expect(result.unavailable).toEqual([]);
+    expect(result.unavailable).toStrictEqual([]);
   });
 
   it("allocates the global message budget across concurrent channels", async () => {
@@ -515,7 +515,7 @@ describe("DiscordReader message scans", () => {
 
     const result = await discord.getMessageActivity(7);
 
-    expect(requestedChannels.toSorted()).toEqual(["active", "empty"]);
+    expect(requestedChannels.toSorted()).toStrictEqual(["active", "empty"]);
     expect(result.calculations.ranking[0]).toMatchObject({
       channelName: "active",
       visibleMessageCount: 1,
@@ -747,7 +747,7 @@ describe("DiscordReader optional resources", () => {
       throw new Error(`Unexpected route: ${route}`);
     });
 
-    await expect(discord.getRecentAuditLog(7)).resolves.toEqual({
+    await expect(discord.getRecentAuditLog(7)).resolves.toStrictEqual({
       facts: { entries: null },
       observationPeriod: {
         end: "2026-08-27T12:00:00.000Z",

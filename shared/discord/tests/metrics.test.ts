@@ -40,7 +40,7 @@ describe("calculateMessageActivity", () => {
       },
     ];
 
-    expect(calculateMessageActivity(scans, PERIOD)).toEqual({
+    expect(calculateMessageActivity(scans, PERIOD)).toStrictEqual({
       cappedChannels: [],
       ranking: [
         {
@@ -81,7 +81,7 @@ describe("calculateMessageActivity", () => {
       },
     ];
 
-    expect(calculateMessageActivity(scans, PERIOD)).toEqual({
+    expect(calculateMessageActivity(scans, PERIOD)).toStrictEqual({
       cappedChannels: ["busy"],
       ranking: [
         {
@@ -137,7 +137,7 @@ describe("calculateInactiveChannels", () => {
         observedAt: "2026-08-27T12:00:00.000Z",
         thresholdDays: 30,
       }),
-    ).toEqual({
+    ).toStrictEqual({
       activeChannelCount: 1,
       inactive: [
         {
@@ -204,7 +204,7 @@ describe("assessPermissionRisks", () => {
           },
         ],
       }),
-    ).toEqual([
+    ).toStrictEqual([
       {
         explanation:
           "This assignable role bypasses channel-specific permission checks. Review who can receive it.",

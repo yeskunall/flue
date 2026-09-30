@@ -67,7 +67,7 @@ describe("member role filters", () => {
         allOf: [" verified ", `<@&${STAFF}>`],
         anyOf: [VERIFIED, "@Muted"],
       }),
-    ).toEqual({
+    ).toStrictEqual({
       filter: {
         allOf: [roles[1], roles[2]],
         anyOf: [roles[1], roles[3]],
@@ -81,7 +81,7 @@ describe("member role filters", () => {
   it("does not silently ignore unknown roles in negative filters", () => {
     const result = resolveMemberRoles(roles, { noneOf: ["Verifed"] });
     expect(result.filter).toBeNull();
-    expect(result.issues).toEqual([
+    expect(result.issues).toStrictEqual([
       { candidates: [], reason: "unknown_role", role: "Verifed" },
     ]);
   });
@@ -94,7 +94,7 @@ describe("member role filters", () => {
         { noneOf: [reference] },
       );
       expect(result.filter).toBeNull();
-      expect(result.issues).toEqual([
+      expect(result.issues).toStrictEqual([
         { candidates: [], reason: "unknown_role", role: reference },
       ]);
     },
@@ -107,7 +107,7 @@ describe("member role filters", () => {
     ];
     expect(
       resolveMemberRoles(duplicates, { allOf: ["Verified"] }).issues,
-    ).toEqual([
+    ).toStrictEqual([
       {
         candidates: [roles[1], duplicates[4]],
         reason: "ambiguous_role",
@@ -116,7 +116,7 @@ describe("member role filters", () => {
     ]);
     expect(
       resolveMemberRoles(duplicates, { allOf: [VERIFIED] }).filter?.allOf,
-    ).toEqual([roles[1]]);
+    ).toStrictEqual([roles[1]]);
     expect(
       resolveMemberRoles(
         [...roles, { id: "100000000000000006", name: "verified" }],
@@ -124,7 +124,7 @@ describe("member role filters", () => {
           allOf: ["Verified"],
         },
       ).filter?.allOf,
-    ).toEqual([roles[1]]);
+    ).toStrictEqual([roles[1]]);
   });
 
   it("rejects contradictory required and excluded roles", () => {
@@ -184,7 +184,7 @@ describe("REST member lookup", () => {
     const result = await reader.getMembersByRoles({ allOf: ["Verified"] });
     expect(result.guildId).toBe(GUILD);
     expect(result.status).toBe("complete");
-    expect(result.members.map(resultMember => resultMember.id)).toEqual([
+    expect(result.members.map(resultMember => resultMember.id)).toStrictEqual([
       "200000000000000001",
     ]);
     expect(result.retrievedAt).toBe("2026-09-01T12:00:00.000Z");
@@ -215,7 +215,7 @@ describe("REST member lookup", () => {
       },
     );
 
-    expect(queries).toEqual([
+    expect(queries).toStrictEqual([
       "limit=2",
       "limit=2&after=200000000000000002",
       "limit=2&after=200000000000000004",
@@ -224,7 +224,7 @@ describe("REST member lookup", () => {
     expect(result.matchedMemberCount).toBe(2);
     expect(result.scannedMemberCount).toBe(4);
     expect(result.retrievedAt).toBe("2026-09-01T12:00:00.000Z");
-    expect(result.members).toEqual([
+    expect(result.members).toStrictEqual([
       {
         displayName: "First member",
         id: "200000000000000001",
@@ -253,7 +253,7 @@ describe("REST member lookup", () => {
     expect(result.status).toBe("complete");
     expect(result.scannedMemberCount).toBe(1);
     expect(result.matchedMemberCount).toBe(0);
-    expect(result.members).toEqual([]);
+    expect(result.members).toStrictEqual([]);
   });
 
   it("stops on invalid role selection before any member request", async () => {
@@ -300,7 +300,7 @@ describe("REST member lookup", () => {
     );
     expect(result.status).toBe("unavailable");
     expect(result.matchedMemberCount).toBeNull();
-    expect(result.requiredAccess).toEqual([
+    expect(result.requiredAccess).toStrictEqual([
       "Bot membership in the configured server",
     ]);
   });
@@ -336,7 +336,10 @@ describe("REST member lookup", () => {
       { allOf: ["Verified"] },
       { maxMembers: 3, pageSize: 2 },
     );
-    expect(queries).toEqual(["limit=2", "limit=1&after=200000000000000002"]);
+    expect(queries).toStrictEqual([
+      "limit=2",
+      "limit=1&after=200000000000000002",
+    ]);
     expect(result.status).toBe("partial");
     expect(result.scannedMemberCount).toBe(3);
     expect(result.matchedMemberCount).toBe(3);
@@ -371,7 +374,7 @@ describe("REST member lookup", () => {
     expect(result.status).toBe("partial");
     expect(result.scannedMemberCount).toBe(3);
     expect(result.matchedMemberCount).toBe(3);
-    expect(result.members.map(value => value.id)).toEqual([
+    expect(result.members.map(value => value.id)).toStrictEqual([
       "200000000000000001",
       "200000000000000002",
       "200000000000000003",
@@ -388,7 +391,7 @@ describe("REST member lookup", () => {
     );
     expect(result.status).toBe("unavailable");
     expect(result.matchedMemberCount).toBeNull();
-    expect(result.requiredAccess).toEqual([]);
+    expect(result.requiredAccess).toStrictEqual([]);
     expect(result.reason).toContain("503");
   });
 
@@ -421,11 +424,11 @@ describe("REST member lookup", () => {
     );
     expect(result.status).toBe("partial");
     expect(result.matchedMemberCount).toBe(1);
-    expect(result.members.map(value => value.id)).toEqual([
+    expect(result.members.map(value => value.id)).toStrictEqual([
       "200000000000000001",
     ]);
     expect(result.reason).toContain("malformed");
-    expect(result.requiredAccess).toEqual([]);
+    expect(result.requiredAccess).toStrictEqual([]);
   });
 
   it("caller cancellation settles without waiting for a REST rate-limit sleep", async () => {
