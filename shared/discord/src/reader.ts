@@ -112,7 +112,7 @@ const DEFAULT_OPTIONS: Omit<ResolvedDiscordReaderOptions, "now"> = {
   maxInactiveDays: 365,
   maxLookbackDays: 30,
   maxMessagesPerChannel: 500,
-  maxTotalMessages: 5_000,
+  maxTotalMessages: 5000,
   pageSize: 100,
 };
 

@@ -37,7 +37,7 @@ function member(index: number, roleIds: string[], bot = false) {
       bot,
       discriminator: "0",
       global_name: `Member ${index}`,
-      id: String(200000000000000000n + BigInt(index)),
+      id: String(200_000_000_000_000_000n + BigInt(index)),
       username: `member${index}`,
     },
   };
@@ -273,7 +273,7 @@ describe("REST member lookup", () => {
   it("reports the Server Members intent requirement rather than zero on a denied list", async () => {
     const result = await findMembersByRoles(
       transport(async () => {
-        throw { code: 50001, status: 403 };
+        throw { code: 50_001, status: 403 };
       }),
       GUILD,
       { allOf: ["Verified"] },
@@ -311,7 +311,7 @@ describe("REST member lookup", () => {
         if (!options?.query?.has("after")) {
           return [member(1, [VERIFIED])];
         }
-        throw { code: 50001, status: 403 };
+        throw { code: 50_001, status: 403 };
       }),
       GUILD,
       { allOf: ["Verified"] },
