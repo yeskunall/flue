@@ -7,6 +7,8 @@ import {
 } from "@flue/runtime/internal";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { DEFAULT_MODEL, DiscordAnalyst } from "#/agents/analyst/agent.ts";
+
 const hooks = vi.hoisted(() => ({
   useModel: vi.fn<(model: string, options: { thinkingLevel: "low" }) => void>(),
   useResponseStart:
@@ -26,8 +28,6 @@ vi.mock("#/agents/analyst/tools/discord.ts", () => ({
 vi.mock("#/discord/client", () => ({
   getDiscordReader: () => ({}),
 }));
-
-import { DEFAULT_MODEL, DiscordAnalyst } from "#/agents/analyst/agent.ts";
 
 const originalModel = process.env.MODEL;
 
