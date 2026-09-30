@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+reviews:
+  in_progress_fortune: false
+  poem: true
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+
+  path_instructions:
+    - path: "{discord/src,shared/discord/src}/**"
+      instructions: |
+        Preserve the Discord integration's read-only API behavior. Restrict
+        guild and channel data to the configured guild, while allowing current
+        bot identity and permission lookups needed to access that guild. Never
+        expose credentials. The message endpoint may be fetched for metadata,
+        but never retain, log, analyze, or return message body content. Keep
+        capped or permission-denied data explicitly partial/unavailable rather
+        than treating it as an exact count or zero. Preserve observation-period
+        and freshness context for time-based metrics.
+
+chat:
+  auto_reply: false
