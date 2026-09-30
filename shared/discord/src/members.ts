@@ -112,7 +112,7 @@ function resolveMemberRoles(
   function resolve(references: string[]): MemberRole[] {
     const selected = new Map<string, MemberRole>();
     for (const reference of references) {
-      const mentionId = /^<@&(\d+)>$/.exec(reference)?.[1];
+      const mentionId = /^<@&(?<roleId>\d+)>$/.exec(reference)?.groups?.roleId;
       const id = mentionId ?? reference;
       const explicitId =
         mentionId !== undefined || /^\d{17,20}$/.test(reference);

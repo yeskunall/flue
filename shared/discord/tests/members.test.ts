@@ -553,6 +553,6 @@ describe("REST member lookup", () => {
         GUILD,
         input,
       ),
-    ).rejects.toThrow(/^(Invalid|Specify)/);
+    ).rejects.toThrow(/^(?:Invalid|Specify)/);
   });
 });
