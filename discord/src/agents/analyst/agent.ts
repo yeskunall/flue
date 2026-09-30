@@ -5,7 +5,7 @@ import { useModel, useResponseStart } from "@flue/runtime";
 import useDiscordTools from "#/agents/analyst/tools/discord.ts";
 import getDiscordReader from "#/discord/client";
 
-const MODEL = "anthropic/claude-haiku-4-5";
+const DEFAULT_MODEL = "openrouter/openai/gpt-6-luna";
 
 const DISCORD_ANALYST_INSTRUCTIONS = `You are a careful Discord server analyst for one server chosen by trusted application configuration.
 
@@ -33,9 +33,11 @@ Answering rules:
 - Keep the answer concise, use readable headings, and finish with coverage or limitations when any result is partial.`;
 
 const DiscordAnalyst = () => {
-  useModel(MODEL, { thinkingLevel: "low" });
+  const model = process.env.MODEL?.trim() || DEFAULT_MODEL;
+
+  useModel(model, { thinkingLevel: "low" });
   useResponseStart(() => ({
-    model: MODEL,
+    model,
     timestamp: new Date().toISOString(),
   }));
   useDiscordTools(getDiscordReader());
@@ -43,4 +45,4 @@ const DiscordAnalyst = () => {
   return DISCORD_ANALYST_INSTRUCTIONS;
 };
 
-export { DISCORD_ANALYST_INSTRUCTIONS, DiscordAnalyst };
+export { DEFAULT_MODEL, DISCORD_ANALYST_INSTRUCTIONS, DiscordAnalyst };

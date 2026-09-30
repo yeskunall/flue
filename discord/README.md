@@ -1,7 +1,7 @@
 ## Discord
 
-`DiscordAnalyst` uses Claude Haiku 4.5 and Discord REST API v10 to answer
-terminal questions about one configured Discord server.
+`DiscordAnalyst` uses GPT-6 Luna via OpenRouter by default and the Discord REST
+API v10 to answer terminal questions about one configured Discord server.
 
 > [!NOTE]  
 > The bot is read-only. It cannot post messages, moderate members, or change
@@ -24,11 +24,28 @@ Results depend on the bot's permissions and the [limits](#limits).
 
 ### Configure
 
-Configure credentials from 1Password in the original checkout:
+Add `OPENROUTER_API_KEY` to the `Employee/Flue` item in 1Password, then generate
+`discord/.env` in the original checkout:
 
 ```sh
 umask 077 && op inject -i discord/.env.example -o discord/.env
 ```
+
+#### Model
+
+The default is `openrouter/openai/gpt-6-luna`. Set `MODEL` in `discord/.env` or
+for one command to use another OpenRouter model:
+
+```sh
+MODEL=openrouter/moonshotai/kimi-k2.6 pnpm ask:continue --message "Check the active threads."
+```
+
+Both models use `OPENROUTER_API_KEY`. A new `MODEL` takes effect on the next
+submission.
+
+> [!IMPORTANT]
+>
+> Any agent using the Discord tools needs a model that supports tool calling.
 
 #### Discord access
 
