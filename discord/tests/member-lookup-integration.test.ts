@@ -1,7 +1,7 @@
 import { Routes } from "discord-api-types/v10";
 import { describe, expect, it } from "vitest";
 
-import { createMemberLookupTool } from "#/agents/analyst/tools/members.ts";
+import createMemberLookupTool from "#/agents/analyst/tools/members.ts";
 import { DiscordReader } from "#/discord";
 
 describe("member lookup integration", () => {

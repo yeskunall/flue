@@ -7,7 +7,7 @@ import { DiscordReader } from "#/reader.ts";
 
 let reader: DiscordReader | undefined;
 
-export function getDiscordReader(): DiscordReader {
+export default function getDiscordReader(): DiscordReader {
   if (reader) {
     return reader;
   }

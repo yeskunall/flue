@@ -9,7 +9,7 @@ import {
   pipe,
 } from "valibot";
 
-import { createMemberLookupTool } from "#/agents/analyst/tools/members.ts";
+import createMemberLookupTool from "#/agents/analyst/tools/members.ts";
 import type { DiscordReader } from "#/discord";
 
 const recentDays = optional(
@@ -107,4 +107,4 @@ async function asToolJson(value: Promise<unknown>): Promise<string> {
   return JSON.stringify(await value, undefined, 2);
 }
 
-export { useDiscordTools };
+export default useDiscordTools;

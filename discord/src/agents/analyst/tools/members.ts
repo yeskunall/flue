@@ -3,7 +3,7 @@ import { defineTool } from "@flue/runtime";
 import { memberRoleFilterSchema } from "#/discord";
 import type { DiscordReader } from "#/discord";
 
-export function createMemberLookupTool(
+export default function createMemberLookupTool(
   reader: Pick<DiscordReader, "getMembersByRoles">,
 ) {
   return defineTool({

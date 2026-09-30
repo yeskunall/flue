@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createMemberLookupTool } from "#/agents/analyst/tools/members.ts";
+import createMemberLookupTool from "#/agents/analyst/tools/members.ts";
 import type { MemberLookupResult } from "#/discord";
 
 function lookup(

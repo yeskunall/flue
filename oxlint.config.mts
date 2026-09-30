@@ -25,6 +25,7 @@ export default defineConfig({
   plugins: ["typescript", "unicorn", "oxc", "import", "vitest"],
   rules: {
     "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
+    "import/no-named-export": "off",
     "no-array-constructor": "error",
     "no-case-declarations": "error",
     "no-constant-binary-expression": [
