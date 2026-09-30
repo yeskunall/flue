@@ -52,6 +52,7 @@ export default defineConfig({
     "prefer-const": "error",
     "prefer-rest-params": "error",
     "prefer-spread": "error",
+    "sort-imports": ["warn", { ignoreDeclarationSort: true }],
     "sort-keys": ["warn", "asc", { allowLineSeparatedGroups: true }],
     "typescript/ban-ts-comment": "error",
     "typescript/no-empty-object-type": "error",

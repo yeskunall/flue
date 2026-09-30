@@ -2,7 +2,7 @@ import { PermissionFlagsBits, Routes } from "discord-api-types/v10";
 import { describe, expect, it } from "vitest";
 
 import { DiscordReader } from "#/reader.ts";
-import type { DiscordRestTransport, DiscordRestOptions } from "#/reader.ts";
+import type { DiscordRestOptions, DiscordRestTransport } from "#/reader.ts";
 
 const NOW = new Date("2026-08-27T12:00:00.000Z");
 const READABLE_CHANNEL_PERMISSIONS = (
