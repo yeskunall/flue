@@ -17,7 +17,7 @@ catalog:
   vitest: 4.1.11
 
 overrides:
-  # Flue's pi-ai version does not list GPT-6 Luna.
+  # Flue 2.2.0 supports GPT-6 Luna without this override.
   "@earendil-works/pi-ai": 0.87.1
 
 allowBuilds:
@@ -27,8 +27,4 @@ allowBuilds:
   protobufjs: false
 
 minimumReleaseAge: 10080
-# Remove these exceptions after 2026-09-29 19:39 UTC.
-minimumReleaseAgeExclude:
-  - "@earendil-works/pi-ai@0.87.1"
-  - "@earendil-works/pi-telemetry@0.87.1"
 saveExact: true
