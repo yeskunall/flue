@@ -28,16 +28,16 @@ import type {
   ObservationPeriod,
 } from "#/metrics.ts";
 
-export interface DiscordRestOptions {
+interface DiscordRestOptions {
   query?: URLSearchParams;
   signal?: AbortSignal;
 }
 
-export interface DiscordRestTransport {
+interface DiscordRestTransport {
   get: (route: string, options?: DiscordRestOptions) => Promise<unknown>;
 }
 
-export interface DiscordReaderOptions {
+interface DiscordReaderOptions {
   now?: () => Date;
   maxLookbackDays?: number;
   maxInactiveDays?: number;
@@ -116,7 +116,7 @@ const DEFAULT_OPTIONS: Omit<ResolvedDiscordReaderOptions, "now"> = {
   pageSize: 100,
 };
 
-export class DiscordReader {
+class DiscordReader {
   readonly #rest: DiscordRestTransport;
   readonly #guildId: string;
   readonly #options: ResolvedDiscordReaderOptions;
@@ -1257,3 +1257,6 @@ function countBy(values: readonly string[]): Record<string, number> {
   }
   return counts;
 }
+
+export { DiscordReader };
+export type { DiscordReaderOptions, DiscordRestOptions, DiscordRestTransport };

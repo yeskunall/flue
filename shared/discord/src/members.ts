@@ -12,7 +12,7 @@ const roleList = v.optional(
   [],
 );
 
-export const memberRoleFilterSchema = v.pipe(
+const memberRoleFilterSchema = v.pipe(
   v.strictObject({
     allOf: roleList,
     anyOf: roleList,
@@ -25,31 +25,31 @@ export const memberRoleFilterSchema = v.pipe(
   ),
 );
 
-export type MemberRoleFilterInput = v.InferInput<typeof memberRoleFilterSchema>;
-export type MemberRoleFilter = v.InferOutput<typeof memberRoleFilterSchema>;
-export interface MemberRole {
+type MemberRoleFilterInput = v.InferInput<typeof memberRoleFilterSchema>;
+type MemberRoleFilter = v.InferOutput<typeof memberRoleFilterSchema>;
+interface MemberRole {
   id: string;
   name: string;
 }
-export interface ResolvedMemberRoles {
+interface ResolvedMemberRoles {
   allOf: MemberRole[];
   anyOf: MemberRole[];
   noneOf: MemberRole[];
   memberType: MemberRoleFilter["memberType"];
 }
-export interface RoleSelectionIssue {
+interface RoleSelectionIssue {
   role: string;
   reason: "unknown_role" | "ambiguous_role" | "contradictory_roles";
   candidates: MemberRole[];
 }
-export interface MatchedMember {
+interface MatchedMember {
   id: string;
   username: string;
   displayName: string;
   isBot: boolean;
   roleIds: string[];
 }
-export interface MemberLookupResult {
+interface MemberLookupResult {
   source: "Discord REST API v10";
   guildId: string;
   startedAt: string;
@@ -81,7 +81,7 @@ const membersSchema = v.array(
 );
 
 /** Resolve names once; an unknown excluded role must never silently match everyone. */
-export function resolveMemberRoles(
+function resolveMemberRoles(
   roles: readonly MemberRole[],
   input: unknown,
 ): { filter: ResolvedMemberRoles | null; issues: RoleSelectionIssue[] } {
@@ -143,7 +143,7 @@ export function resolveMemberRoles(
   return { filter: issues.length ? null : filter, issues };
 }
 
-export function matchesMemberRoles(
+function matchesMemberRoles(
   member: { roleIds: readonly string[]; isBot: boolean },
   filter: ResolvedMemberRoles,
   guildId: string,
@@ -172,7 +172,7 @@ interface MemberScanOptions {
 }
 
 /** A bounded, live roster scan. No caching or changes to Discord. */
-export async function findMembersByRoles(
+async function findMembersByRoles(
   rest: DiscordRestTransport,
   guildId: string,
   input: unknown,
@@ -388,3 +388,19 @@ function compareIds(left: string, right: string): number {
       ? 1
       : 0;
 }
+
+export {
+  findMembersByRoles,
+  matchesMemberRoles,
+  memberRoleFilterSchema,
+  resolveMemberRoles,
+};
+export type {
+  MatchedMember,
+  MemberLookupResult,
+  MemberRole,
+  MemberRoleFilter,
+  MemberRoleFilterInput,
+  ResolvedMemberRoles,
+  RoleSelectionIssue,
+};

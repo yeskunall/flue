@@ -1,16 +1,16 @@
 import { PermissionFlagsBits } from "discord-api-types/v10";
 
-export interface ObservationPeriod {
+interface ObservationPeriod {
   start: string;
   end: string;
 }
 
-export interface ScannedMessage {
+interface ScannedMessage {
   id: string;
   timestamp: string;
 }
 
-export type ChannelMessageScan =
+type ChannelMessageScan =
   | {
       channelId: string;
       channelName: string;
@@ -25,13 +25,13 @@ export type ChannelMessageScan =
       reason: string;
     };
 
-export interface UnavailableChannel {
+interface UnavailableChannel {
   channelId: string;
   channelName: string;
   reason: string;
 }
 
-export interface MessageActivity {
+interface MessageActivity {
   visibleMessageCount: number;
   ranking: Array<{
     channelId: string;
@@ -43,7 +43,7 @@ export interface MessageActivity {
   unavailableChannels: UnavailableChannel[];
 }
 
-export type LatestMessageObservation =
+type LatestMessageObservation =
   | {
       channelId: string;
       channelName: string;
@@ -57,7 +57,7 @@ export type LatestMessageObservation =
       reason: string;
     };
 
-export interface InactiveChannels {
+interface InactiveChannels {
   inactive: Array<{
     channelId: string;
     channelName: string;
@@ -91,7 +91,7 @@ interface RiskChannel {
   }>;
 }
 
-export interface PermissionRisk {
+interface PermissionRisk {
   severity: "high" | "medium";
   subjectType: "role" | "channel";
   subjectId: string;
@@ -182,7 +182,7 @@ const CHANNEL_RISK_PERMISSIONS = ROLE_RISK_PERMISSIONS.filter(
     || name === "MentionEveryone",
 );
 
-export function calculateMessageActivity(
+function calculateMessageActivity(
   scans: readonly ChannelMessageScan[],
   period: ObservationPeriod,
 ): MessageActivity {
@@ -233,7 +233,7 @@ export function calculateMessageActivity(
   };
 }
 
-export function calculateInactiveChannels(
+function calculateInactiveChannels(
   observations: readonly LatestMessageObservation[],
   options: { observedAt: string; thresholdDays: number },
 ): InactiveChannels {
@@ -290,7 +290,7 @@ export function calculateInactiveChannels(
   };
 }
 
-export function assessPermissionRisks(input: {
+function assessPermissionRisks(input: {
   guildId: string;
   roles: readonly RiskRole[];
   channels: readonly RiskChannel[];
@@ -359,3 +359,19 @@ export function assessPermissionRisks(input: {
 function hasPermission(permissions: bigint, flag: bigint): boolean {
   return (permissions & flag) === flag;
 }
+
+export {
+  assessPermissionRisks,
+  calculateInactiveChannels,
+  calculateMessageActivity,
+};
+export type {
+  ChannelMessageScan,
+  InactiveChannels,
+  LatestMessageObservation,
+  MessageActivity,
+  ObservationPeriod,
+  PermissionRisk,
+  ScannedMessage,
+  UnavailableChannel,
+};

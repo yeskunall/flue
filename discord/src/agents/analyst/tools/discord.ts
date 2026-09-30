@@ -14,7 +14,7 @@ const recentDays = v.optional(
   7,
 );
 
-export function useDiscordTools(reader: DiscordReader): void {
+function useDiscordTools(reader: DiscordReader): void {
   useTool(createMemberLookupTool(reader));
 
   useTool({
@@ -98,3 +98,5 @@ export function useDiscordTools(reader: DiscordReader): void {
 async function asToolJson(value: Promise<unknown>): Promise<string> {
   return JSON.stringify(await value, undefined, 2);
 }
+
+export { useDiscordTools };
