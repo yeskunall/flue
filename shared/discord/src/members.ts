@@ -1,32 +1,54 @@
 import { Routes } from "discord-api-types/v10";
-import * as v from "valibot";
+import {
+  array,
+  boolean,
+  check,
+  integer,
+  isValiError,
+  maxLength,
+  maxValue,
+  minLength,
+  minValue,
+  nullable,
+  number,
+  object,
+  optional,
+  parse,
+  picklist,
+  pipe,
+  regex,
+  strictObject,
+  string,
+  trim,
+} from "valibot";
+import type { InferInput, InferOutput } from "valibot";
 
 import type { DiscordRestTransport } from "#/reader.ts";
 
-const snowflake = v.pipe(v.string(), v.regex(/^\d{17,20}$/));
-const roleList = v.optional(
-  v.pipe(
-    v.array(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100))),
-    v.maxLength(25),
+const snowflake = pipe(string(), regex(/^\d{17,20}$/));
+const roleList = optional(
+  pipe(
+    array(pipe(string(), trim(), minLength(1), maxLength(100))),
+    maxLength(25),
   ),
   [],
 );
 
-const memberRoleFilterSchema = v.pipe(
-  v.strictObject({
+const memberRoleFilterSchema = pipe(
+  strictObject({
     allOf: roleList,
     anyOf: roleList,
-    memberType: v.optional(v.picklist(["all", "humans", "bots"]), "all"),
+    memberType: optional(picklist(["all", "humans", "bots"]), "all"),
     noneOf: roleList,
   }),
-  v.check(
+  check(
     input => input.allOf.length + input.anyOf.length + input.noneOf.length > 0,
     "Specify at least one role filter. Use @everyone to explicitly select all members.",
   ),
 );
 
-type MemberRoleFilterInput = v.InferInput<typeof memberRoleFilterSchema>;
-type MemberRoleFilter = v.InferOutput<typeof memberRoleFilterSchema>;
+type MemberRoleFilterInput = InferInput<typeof memberRoleFilterSchema>;
+type MemberRoleFilter = InferOutput<typeof memberRoleFilterSchema>;
 interface MemberRole {
   id: string;
   name: string;
@@ -66,16 +88,16 @@ interface MemberLookupResult {
   roleSelectionIssues?: RoleSelectionIssue[];
 }
 
-const rolesSchema = v.array(v.object({ id: snowflake, name: v.string() }));
-const membersSchema = v.array(
-  v.object({
-    nick: v.optional(v.nullable(v.string())),
-    roles: v.array(snowflake),
-    user: v.object({
-      bot: v.optional(v.boolean(), false),
-      global_name: v.optional(v.nullable(v.string())),
+const rolesSchema = array(object({ id: snowflake, name: string() }));
+const membersSchema = array(
+  object({
+    nick: optional(nullable(string())),
+    roles: array(snowflake),
+    user: object({
+      bot: optional(boolean(), false),
+      global_name: optional(nullable(string())),
       id: snowflake,
-      username: v.string(),
+      username: string(),
     }),
   }),
 );
@@ -85,7 +107,7 @@ function resolveMemberRoles(
   roles: readonly MemberRole[],
   input: unknown,
 ): { filter: ResolvedMemberRoles | null; issues: RoleSelectionIssue[] } {
-  const parsed = v.parse(memberRoleFilterSchema, input);
+  const parsed = parse(memberRoleFilterSchema, input);
   const issues: RoleSelectionIssue[] = [];
   function resolve(references: string[]): MemberRole[] {
     const selected = new Map<string, MemberRole>();
@@ -178,15 +200,15 @@ async function findMembersByRoles(
   input: unknown,
   options: MemberScanOptions = {},
 ): Promise<MemberLookupResult> {
-  const parsed = v.parse(memberRoleFilterSchema, input);
-  v.parse(snowflake, guildId);
-  const positiveInteger = v.pipe(v.number(), v.integer(), v.minValue(1));
-  const pageSize = v.parse(
-    v.pipe(positiveInteger, v.maxValue(1000)),
+  const parsed = parse(memberRoleFilterSchema, input);
+  parse(snowflake, guildId);
+  const positiveInteger = pipe(number(), integer(), minValue(1));
+  const pageSize = parse(
+    pipe(positiveInteger, maxValue(1000)),
     options.pageSize ?? 1000,
   );
-  const maxMembers = v.parse(
-    v.pipe(positiveInteger, v.maxValue(100_000)),
+  const maxMembers = parse(
+    pipe(positiveInteger, maxValue(100_000)),
     options.maxMembers ?? 100_000,
   );
   const now = options.now ?? (() => new Date());
@@ -231,7 +253,7 @@ async function findMembersByRoles(
 
   try {
     signal.throwIfAborted();
-    roles = v.parse(
+    roles = parse(
       rolesSchema,
       await getWithinDeadline(rest, Routes.guildRoles(guildId), signal),
     );
@@ -256,7 +278,7 @@ async function findMembersByRoles(
       if (after) {
         query.set("after", after);
       }
-      const page = v.parse(
+      const page = parse(
         membersSchema,
         await getWithinDeadline(
           rest,
@@ -310,7 +332,7 @@ async function findMembersByRoles(
       throw error;
     }
     // Never accept malformed rows, but preserve matches from already validated pages.
-    if (v.isValiError(error)) {
+    if (isValiError(error)) {
       if (!scannedMemberCount) {
         throw error;
       }
