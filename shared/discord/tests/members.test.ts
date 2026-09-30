@@ -385,11 +385,11 @@ describe("REST member lookup", () => {
   it("retains novel matches in a mixed repeated page before stopping partial", async () => {
     expect.hasAssertions();
     const result = await findMembersByRoles(
-      transport(async (_route, options) => {
-        return !options?.query?.has("after")
+      transport(async (_route, options) =>
+        !options?.query?.has("after")
           ? [member(1, [VERIFIED]), member(2, [VERIFIED])]
-          : [member(2, [VERIFIED]), member(3, [VERIFIED])];
-      }),
+          : [member(2, [VERIFIED]), member(3, [VERIFIED])],
+      ),
       GUILD,
       { allOf: ["Verified"] },
       { pageSize: 2 },
