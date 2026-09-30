@@ -623,7 +623,7 @@ class DiscordReader {
 
   async getRecentAuditLog(days: number) {
     const observationPeriod = this.#periodForDays(days, 45, "audit log");
-    const entries: Array<Record<string, unknown>> = [];
+    const entries: Record<string, unknown>[] = [];
     const users = new Map<string, string>();
     let before: string | undefined = undefined;
     let reachedPeriodStart = false;
@@ -855,7 +855,7 @@ class DiscordReader {
     period: ObservationPeriod,
     messageLimit: number,
   ): Promise<ChannelScanResult> {
-    const messages: Array<{ id: string; timestamp: string }> = [];
+    const messages: { id: string; timestamp: string }[] = [];
     let before: string | undefined = undefined;
     let requestCount = 0;
 

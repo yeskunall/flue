@@ -33,12 +33,12 @@ interface UnavailableChannel {
 
 interface MessageActivity {
   visibleMessageCount: number;
-  ranking: Array<{
+  ranking: {
     channelId: string;
     channelName: string;
     visibleMessageCount: number;
     countIsLowerBound: boolean;
-  }>;
+  }[];
   cappedChannels: string[];
   unavailableChannels: UnavailableChannel[];
 }
@@ -58,16 +58,16 @@ type LatestMessageObservation =
     };
 
 interface InactiveChannels {
-  inactive: Array<{
+  inactive: {
     channelId: string;
     channelName: string;
     latestVisibleMessageAt: string;
     inactiveForDays: number;
-  }>;
-  noVisibleMessages: Array<{
+  }[];
+  noVisibleMessages: {
     channelId: string;
     channelName: string;
-  }>;
+  }[];
   activeChannelCount: number;
   unavailableChannels: UnavailableChannel[];
 }
@@ -83,12 +83,12 @@ interface RiskChannel {
   id: string;
   name: string;
   type: number;
-  permission_overwrites?: Array<{
+  permission_overwrites?: {
     id: string;
     type: number;
     allow: string;
     deny: string;
-  }>;
+  }[];
 }
 
 interface PermissionRisk {
@@ -102,11 +102,11 @@ interface PermissionRisk {
 
 const MILLISECONDS_PER_DAY = 86_400_000;
 
-const ROLE_RISK_PERMISSIONS: ReadonlyArray<{
+const ROLE_RISK_PERMISSIONS: readonly {
   flag: bigint;
   name: string;
   severity: PermissionRisk["severity"];
-}> = [
+}[] = [
   {
     flag: PermissionFlagsBits.Administrator,
     name: "Administrator",
