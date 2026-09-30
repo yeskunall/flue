@@ -176,8 +176,8 @@ export async function findMembersByRoles(
   v.parse(snowflake, guildId);
   const positiveInteger = v.pipe(v.number(), v.integer(), v.minValue(1));
   const pageSize = v.parse(
-    v.pipe(positiveInteger, v.maxValue(1_000)),
-    options.pageSize ?? 1_000,
+    v.pipe(positiveInteger, v.maxValue(1000)),
+    options.pageSize ?? 1000,
   );
   const maxMembers = v.parse(
     v.pipe(positiveInteger, v.maxValue(100_000)),

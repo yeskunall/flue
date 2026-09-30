@@ -8,7 +8,7 @@ test("a 30k-member server returns the full filtered count with a bounded preview
   const guildId = "100000000000000001";
   const verified = "100000000000000002";
   const muted = "100000000000000003";
-  const baseId = 200000000000000000n;
+  const baseId = 200_000_000_000_000_000n;
   let memberRequests = 0;
   const reader = new DiscordReader(
     {
@@ -27,7 +27,7 @@ test("a 30k-member server returns the full filtered count with a bounded preview
         const after = options?.query?.get("after");
         const offset = after ? Number(BigInt(after) - baseId) : 0;
         return Array.from(
-          { length: Math.min(1_000, 30_001 - offset) },
+          { length: Math.min(1000, 30_001 - offset) },
           (_, index) => {
             const n = offset + index + 1;
             return {
@@ -72,7 +72,7 @@ test("a 30k-member server returns the full filtered count with a bounded preview
   expect(output.status).toBe("complete");
   expect(output.scannedMemberCount).toBe(30_001);
   // 15,000 verified − 5,000 muted − 2,000 remaining bots.
-  expect(output.matchedMemberCount).toBe(8_000);
+  expect(output.matchedMemberCount).toBe(8000);
   expect(output.membersPreview).toHaveLength(25);
   expect(output.membersPreview[0].id).toBe("200000000000000002");
   expect(output.members).toBeUndefined();
