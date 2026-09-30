@@ -1,5 +1,5 @@
 import { PermissionFlagsBits, Routes } from "discord-api-types/v10";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { DiscordReader } from "#/reader.ts";
 import type { DiscordRestTransport, DiscordRestOptions } from "#/reader.ts";
@@ -69,7 +69,7 @@ function withBotPermissions(
 }
 
 describe("DiscordReader server data", () => {
-  test("fetches a trusted guild overview with approximate counts and a retrieval timestamp", async () => {
+  it("fetches a trusted guild overview with approximate counts and a retrieval timestamp", async () => {
     const discord = reader(async (route, options) => {
       if (route !== Routes.guild("123456789012345678")) {
         throw new Error(`Unexpected route: ${route}`);
@@ -113,7 +113,7 @@ describe("DiscordReader server data", () => {
     });
   });
 
-  test("normalizes channels, categories, roles, active threads, and calculated permission risks", async () => {
+  it("normalizes channels, categories, roles, active threads, and calculated permission risks", async () => {
     const discord = reader(async route => {
       if (route === Routes.guildChannels("123456789012345678")) {
         return [
@@ -213,7 +213,7 @@ describe("DiscordReader server data", () => {
     });
   });
 
-  test("uses null rather than zero when server structure is unavailable", async () => {
+  it("uses null rather than zero when server structure is unavailable", async () => {
     const discord = reader(async route => {
       if (
         route === Routes.guildChannels("123456789012345678")
@@ -251,7 +251,7 @@ describe("DiscordReader server data", () => {
 });
 
 describe("DiscordReader message scans", () => {
-  test("scans only message-capable channels and reports capped counts as lower bounds", async () => {
+  it("scans only message-capable channels and reports capped counts as lower bounds", async () => {
     const discord = reader(
       withBotPermissions(
         READABLE_CHANNEL_PERMISSIONS,
@@ -330,7 +330,7 @@ describe("DiscordReader message scans", () => {
     });
   });
 
-  test("keeps an unreadable channel unavailable without failing the activity result", async () => {
+  it("keeps an unreadable channel unavailable without failing the activity result", async () => {
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
         if (route === Routes.guildChannels("123456789012345678")) {
@@ -384,7 +384,7 @@ describe("DiscordReader message scans", () => {
     });
   });
 
-  test("does not mistake an empty response for zero activity when Read Message History is missing", async () => {
+  it("does not mistake an empty response for zero activity when Read Message History is missing", async () => {
     const discord = reader(
       withBotPermissions(
         PermissionFlagsBits.ViewChannel.toString(),
@@ -432,7 +432,7 @@ describe("DiscordReader message scans", () => {
     });
   });
 
-  test("treats Administrator as granting message-read permissions", async () => {
+  it("treats Administrator as granting message-read permissions", async () => {
     let messageRequests = 0;
     const discord = reader(
       withBotPermissions(
@@ -472,7 +472,7 @@ describe("DiscordReader message scans", () => {
     expect(result.unavailable).toEqual([]);
   });
 
-  test("allocates the global message budget across concurrent channels", async () => {
+  it("allocates the global message budget across concurrent channels", async () => {
     const requestedChannels: string[] = [];
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
@@ -523,7 +523,7 @@ describe("DiscordReader message scans", () => {
     expect(result.scan.scannedChannelCount).toBe(2);
   });
 
-  test("records retrieval completion separately from the observation cutoff", async () => {
+  it("records retrieval completion separately from the observation cutoff", async () => {
     let clockCalls = 0;
     const discord = reader(
       withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
@@ -548,7 +548,7 @@ describe("DiscordReader message scans", () => {
     });
   });
 
-  test("uses one latest visible message per channel to calculate inactivity", async () => {
+  it("uses one latest visible message per channel to calculate inactivity", async () => {
     const discord = reader(
       withBotPermissions(
         READABLE_CHANNEL_PERMISSIONS,
@@ -617,7 +617,7 @@ describe("DiscordReader message scans", () => {
 });
 
 describe("DiscordReader optional resources", () => {
-  test("returns upcoming scheduled events as fetched facts", async () => {
+  it("returns upcoming scheduled events as fetched facts", async () => {
     const discord = reader(async (route, options) => {
       if (route !== Routes.guildScheduledEvents("123456789012345678")) {
         throw new Error(`Unexpected route: ${route}`);
@@ -663,7 +663,7 @@ describe("DiscordReader optional resources", () => {
     });
   });
 
-  test("uses null rather than zero when scheduled events are unavailable", async () => {
+  it("uses null rather than zero when scheduled events are unavailable", async () => {
     const discord = reader(async route => {
       if (route === Routes.guildScheduledEvents("123456789012345678")) {
         throw Object.assign(new Error("Missing Access"), {
@@ -681,7 +681,7 @@ describe("DiscordReader optional resources", () => {
     });
   });
 
-  test("normalizes recent audit-log actions and actor names", async () => {
+  it("normalizes recent audit-log actions and actor names", async () => {
     const occurredAt = "2026-08-26T10:00:00.000Z";
     const entryId = (
       (BigInt(Date.parse(occurredAt)) - 1_420_070_400_000n)
@@ -736,7 +736,7 @@ describe("DiscordReader optional resources", () => {
     });
   });
 
-  test("turns a missing View Audit Log permission into metric-level unavailability", async () => {
+  it("turns a missing View Audit Log permission into metric-level unavailability", async () => {
     const discord = reader(async route => {
       if (route === Routes.guildAuditLog("123456789012345678")) {
         throw Object.assign(new Error("Missing Permissions"), {

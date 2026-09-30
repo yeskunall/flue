@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { createMemberLookupTool } from "#/agents/analyst/tools/members.ts";
 import type { MemberLookupResult } from "#/discord";
@@ -43,7 +43,7 @@ const context = {
 };
 
 describe("Flue member lookup result", () => {
-  test("returns the full count and a bounded preview without file-export fields", async () => {
+  it("returns the full count and a bounded preview without file-export fields", async () => {
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup(),
     });
@@ -58,7 +58,7 @@ describe("Flue member lookup result", () => {
     expect(result.reportError).toBeUndefined();
   });
 
-  test("never presents partial matches as a complete server result", async () => {
+  it("never presents partial matches as a complete server result", async () => {
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup("partial"),
     });
@@ -68,7 +68,7 @@ describe("Flue member lookup result", () => {
     expect(result.reportError).toBeUndefined();
   });
 
-  test("returns unavailable rather than zero when member access is denied", async () => {
+  it("returns unavailable rather than zero when member access is denied", async () => {
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup("unavailable"),
     });
@@ -81,7 +81,7 @@ describe("Flue member lookup result", () => {
     );
   });
 
-  test("returns a real zero count when a complete scan finds no matching members", async () => {
+  it("returns a real zero count when a complete scan finds no matching members", async () => {
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => ({
         ...lookup(),

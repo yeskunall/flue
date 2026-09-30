@@ -1,7 +1,7 @@
 import { setImmediate } from "node:timers/promises";
 
 import { Routes } from "discord-api-types/v10";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   findMembersByRoles,
@@ -61,7 +61,7 @@ function transport(
 }
 
 describe("member role filters", () => {
-  test("resolves exact names, case-insensitive names, role mentions and IDs", () => {
+  it("resolves exact names, case-insensitive names, role mentions and IDs", () => {
     expect(
       resolveMemberRoles(roles, {
         allOf: [" verified ", `<@&${STAFF}>`],
@@ -78,7 +78,7 @@ describe("member role filters", () => {
     });
   });
 
-  test("does not silently ignore unknown roles in negative filters", () => {
+  it("does not silently ignore unknown roles in negative filters", () => {
     const result = resolveMemberRoles(roles, { noneOf: ["Verifed"] });
     expect(result.filter).toBeNull();
     expect(result.issues).toEqual([
@@ -86,7 +86,7 @@ describe("member role filters", () => {
     ]);
   });
 
-  test.each(["100000000000000009", "<@&100000000000000009>"])(
+  it.each(["100000000000000009", "<@&100000000000000009>"])(
     "never substitutes a role name for the explicit identity %s",
     reference => {
       const result = resolveMemberRoles(
@@ -100,7 +100,7 @@ describe("member role filters", () => {
     },
   );
 
-  test("requires an ID for ambiguous names, but accepts a unique exact-case match", () => {
+  it("requires an ID for ambiguous names, but accepts a unique exact-case match", () => {
     const duplicates = [
       ...roles,
       { id: "100000000000000005", name: "Verified" },
@@ -127,7 +127,7 @@ describe("member role filters", () => {
     ).toEqual([roles[1]]);
   });
 
-  test("rejects contradictory required and excluded roles", () => {
+  it("rejects contradictory required and excluded roles", () => {
     const result = resolveMemberRoles(roles, {
       allOf: ["Verified"],
       noneOf: [VERIFIED],
@@ -136,7 +136,7 @@ describe("member role filters", () => {
     expect(result.issues[0]?.reason).toBe("contradictory_roles");
   });
 
-  test.each([
+  it.each([
     [{ allOf: ["Verified", "Staff"] }, [VERIFIED, STAFF], false, true],
     [{ allOf: ["Verified", "Staff"] }, [VERIFIED], false, false],
     [{ anyOf: ["Verified", "Staff"] }, [STAFF], false, true],
@@ -173,7 +173,7 @@ describe("member role filters", () => {
 });
 
 describe("REST member lookup", () => {
-  test("the live reader uses its trusted guild and clock for role lookups", async () => {
+  it("the live reader uses its trusted guild and clock for role lookups", async () => {
     const reader = new DiscordReader(
       transport(async () => [member(1, [VERIFIED])]),
       GUILD,
@@ -190,7 +190,7 @@ describe("REST member lookup", () => {
     expect(result.retrievedAt).toBe("2026-09-01T12:00:00.000Z");
   });
 
-  test("paginates the entire roster and returns all matches with current roles, not just the first page", async () => {
+  it("paginates the entire roster and returns all matches with current roles, not just the first page", async () => {
     const queries: string[] = [];
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
@@ -242,7 +242,7 @@ describe("REST member lookup", () => {
     ]);
   });
 
-  test("does not confuse an empty matching list with a failed scan", async () => {
+  it("does not confuse an empty matching list with a failed scan", async () => {
     const result = await findMembersByRoles(
       transport(async () => [member(1, [STAFF])]),
       GUILD,
@@ -256,7 +256,7 @@ describe("REST member lookup", () => {
     expect(result.members).toEqual([]);
   });
 
-  test("stops on invalid role selection before any member request", async () => {
+  it("stops on invalid role selection before any member request", async () => {
     const result = await findMembersByRoles(
       transport(async () => {
         throw new Error("An unresolved filter must never list members.");
@@ -270,7 +270,7 @@ describe("REST member lookup", () => {
     expect(result.roleSelectionIssues?.[0]?.reason).toBe("unknown_role");
   });
 
-  test("reports the Server Members intent requirement rather than zero on a denied list", async () => {
+  it("reports the Server Members intent requirement rather than zero on a denied list", async () => {
     const result = await findMembersByRoles(
       transport(async () => {
         throw { code: 50001, status: 403 };
@@ -286,7 +286,7 @@ describe("REST member lookup", () => {
     expect(result.reason).toContain("Server Members");
   });
 
-  test("does not blame the member intent when even listing roles is denied", async () => {
+  it("does not blame the member intent when even listing roles is denied", async () => {
     const result = await findMembersByRoles(
       {
         get: async () => {
@@ -305,7 +305,7 @@ describe("REST member lookup", () => {
     ]);
   });
 
-  test("labels results partial if a later page is denied", async () => {
+  it("labels results partial if a later page is denied", async () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         if (!options?.query?.has("after")) {
@@ -322,7 +322,7 @@ describe("REST member lookup", () => {
     expect(result.members).toHaveLength(1);
   });
 
-  test("bounds roster scanning and reports a partial result at the cap", async () => {
+  it("bounds roster scanning and reports a partial result at the cap", async () => {
     const queries: string[] = [];
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
@@ -343,7 +343,7 @@ describe("REST member lookup", () => {
     expect(result.reason).toContain("limit");
   });
 
-  test("a non-advancing page cannot loop forever or duplicate members", async () => {
+  it("a non-advancing page cannot loop forever or duplicate members", async () => {
     const result = await findMembersByRoles(
       transport(async () => [member(1, [VERIFIED])]),
       GUILD,
@@ -357,7 +357,7 @@ describe("REST member lookup", () => {
     expect(result.reason).toContain("cursor");
   });
 
-  test("retains novel matches in a mixed repeated page before stopping partial", async () => {
+  it("retains novel matches in a mixed repeated page before stopping partial", async () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         return !options?.query?.has("after")
@@ -378,7 +378,7 @@ describe("REST member lookup", () => {
     ]);
   });
 
-  test("operational failures are not described as missing permissions", async () => {
+  it("operational failures are not described as missing permissions", async () => {
     const result = await findMembersByRoles(
       transport(async () => {
         throw { status: 503 };
@@ -392,7 +392,7 @@ describe("REST member lookup", () => {
     expect(result.reason).toContain("503");
   });
 
-  test("rejects malformed member data rather than assuming someone lacks a role", async () => {
+  it("rejects malformed member data rather than assuming someone lacks a role", async () => {
     await expect(
       findMembersByRoles(
         transport(async () => [
@@ -407,7 +407,7 @@ describe("REST member lookup", () => {
     ).rejects.toThrow(/Invalid type/);
   });
 
-  test("keeps validated matches as partial if a later page is malformed", async () => {
+  it("keeps validated matches as partial if a later page is malformed", async () => {
     const result = await findMembersByRoles(
       transport(async (_route, options) => {
         if (!options?.query?.has("after")) {
@@ -428,7 +428,7 @@ describe("REST member lookup", () => {
     expect(result.requiredAccess).toEqual([]);
   });
 
-  test("caller cancellation settles without waiting for a REST rate-limit sleep", async () => {
+  it("caller cancellation settles without waiting for a REST rate-limit sleep", async () => {
     const controller = new AbortController();
     const started = Promise.withResolvers<void>();
     const response = Promise.withResolvers<unknown>();
@@ -463,7 +463,7 @@ describe("REST member lookup", () => {
     }
   });
 
-  test("the time budget returns partial matches even when REST is still rate-limited", async () => {
+  it("the time budget returns partial matches even when REST is still rate-limited", async () => {
     const deadline = new AbortController();
     const timeout = vi
       .spyOn(AbortSignal, "timeout")
@@ -505,7 +505,7 @@ describe("REST member lookup", () => {
     }
   });
 
-  test.each([
+  it.each([
     {},
     { allOf: [""] },
     { allOf: Array.from({ length: 26 }, () => "Verified") },

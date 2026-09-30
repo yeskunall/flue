@@ -1,5 +1,5 @@
 import { ChannelType, PermissionFlagsBits } from "discord-api-types/v10";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   assessPermissionRisks,
@@ -17,7 +17,7 @@ const PERIOD = {
 };
 
 describe("calculateMessageActivity", () => {
-  test("counts only messages inside the observation period and ranks ties by channel name", () => {
+  it("counts only messages inside the observation period and ranks ties by channel name", () => {
     const scans: ChannelMessageScan[] = [
       {
         channelId: "1",
@@ -61,7 +61,7 @@ describe("calculateMessageActivity", () => {
     });
   });
 
-  test("marks capped counts as lower bounds and keeps unavailable channels out of the ranking", () => {
+  it("marks capped counts as lower bounds and keeps unavailable channels out of the ranking", () => {
     const scans: ChannelMessageScan[] = [
       {
         channelId: "1",
@@ -104,7 +104,7 @@ describe("calculateMessageActivity", () => {
 });
 
 describe("calculateInactiveChannels", () => {
-  test("separates inactive, empty, active, and permission-blocked channels", () => {
+  it("separates inactive, empty, active, and permission-blocked channels", () => {
     const observations: LatestMessageObservation[] = [
       {
         channelId: "1",
@@ -160,7 +160,7 @@ describe("calculateInactiveChannels", () => {
 });
 
 describe("assessPermissionRisks", () => {
-  test("flags high-impact assignable roles and everyone channel overrides without alleging abuse", () => {
+  it("flags high-impact assignable roles and everyone channel overrides without alleging abuse", () => {
     const administrator = PermissionFlagsBits.Administrator.toString();
     const mentionEveryone = PermissionFlagsBits.MentionEveryone.toString();
     const manageMessages = PermissionFlagsBits.ManageMessages.toString();
