@@ -104,7 +104,7 @@ export function resolveMemberRoles(
           role => role.name.replace(/^@/, "").toLowerCase() === name,
         );
       }
-      const role = candidates[0];
+      const [role] = candidates;
       if (candidates.length !== 1 || !role) {
         issues.push({
           candidates,
@@ -231,7 +231,7 @@ export async function findMembersByRoles(
       await getWithinDeadline(rest, Routes.guildRoles(guildId), signal),
     );
     const resolved = resolveMemberRoles(roles, parsed);
-    filter = resolved.filter;
+    ({ filter } = resolved);
     if (!filter) {
       return {
         ...finish(

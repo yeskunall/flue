@@ -969,7 +969,7 @@ export class DiscordReader {
         new URLSearchParams({ limit: "1" }),
       );
       const messages = expectArray(page, `latest message for #${channel.name}`);
-      const first = messages[0];
+      const [first] = messages;
       return {
         ...channelIdentity(channel),
         latestVisibleMessageAt:
