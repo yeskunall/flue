@@ -96,5 +96,5 @@ export function useDiscordTools(reader: DiscordReader): void {
 }
 
 async function asToolJson(value: Promise<unknown>): Promise<string> {
-  return JSON.stringify(await value, null, 2);
+  return JSON.stringify(await value, undefined, 2);
 }

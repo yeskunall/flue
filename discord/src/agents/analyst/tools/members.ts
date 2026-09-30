@@ -34,7 +34,7 @@ export function createMemberLookupTool(
           membersPreview: members.slice(0, 25),
           previewTruncated: members.length > 25,
         },
-        null,
+        undefined,
         2,
       );
     },

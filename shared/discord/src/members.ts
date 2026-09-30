@@ -138,6 +138,8 @@ export function resolveMemberRoles(
       role: role.name,
     });
   }
+  // An invalid filter must remain explicit in serialized results.
+  // oxlint-disable-next-line unicorn/no-null
   return { filter: issues.length ? null : filter, issues };
 }
 
@@ -196,6 +198,8 @@ export async function findMembersByRoles(
   const members: MatchedMember[] = [];
   const seenMembers = new Set<string>();
   let roles: MemberRole[] = [];
+  // The result has an explicit null filter until role selection succeeds.
+  // oxlint-disable-next-line unicorn/no-null
   let filter: ResolvedMemberRoles | null = null;
   let scannedMemberCount = 0;
   let scope: "roles" | "members" = "roles";
@@ -209,8 +213,9 @@ export async function findMembersByRoles(
     return {
       filter,
       guildId,
+      // A count we could not determine is null, not zero or an omitted field.
       matchedMemberCount:
-        status === "complete" || status === "partial" ? members.length : null,
+        status === "complete" || status === "partial" ? members.length : null, // oxlint-disable-line unicorn/no-null
       maxMembers,
       members,
       reason,

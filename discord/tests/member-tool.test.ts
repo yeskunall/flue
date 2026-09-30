@@ -17,6 +17,8 @@ function lookup(
   return {
     filter: { allOf: [role], anyOf: [], memberType: "all", noneOf: [] },
     guildId: "100000000000000001",
+    // The unavailable result must keep an explicit unknown count.
+    // oxlint-disable-next-line unicorn/no-null
     matchedMemberCount: status === "unavailable" ? null : 40,
     maxMembers: 100_000,
     members: status === "unavailable" ? [] : members,

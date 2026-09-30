@@ -121,6 +121,8 @@ describe("calculateInactiveChannels", () => {
       {
         channelId: "3",
         channelName: "empty",
+        // No visible message is represented by an explicit null timestamp.
+        // oxlint-disable-next-line unicorn/no-null
         latestVisibleMessageAt: null,
         status: "available",
       },

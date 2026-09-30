@@ -7,6 +7,17 @@ export default defineConfig({
     suspicious: "error",
   },
   ignorePatterns: ["**/dist/**"],
+  overrides: [
+    {
+      files: [
+        "discord/tests/member-lookup-integration.test.ts",
+        "shared/discord/src/reader.ts",
+        "shared/discord/tests/members.test.ts",
+        "shared/discord/tests/reader.test.ts",
+      ],
+      rules: { "unicorn/no-null": "off" },
+    },
+  ],
   plugins: ["typescript", "unicorn", "oxc", "import", "vitest"],
   rules: {
     "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
