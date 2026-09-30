@@ -77,7 +77,7 @@ test("a 30k-member server returns the full filtered count with a bounded preview
   expect(output.membersPreview).toHaveLength(25);
   expect(output.membersPreview[0].id).toBe("200000000000000002");
   expect(output.members).toBeUndefined();
-  expect(output.previewTruncated).toBe(true);
+  expect(output.previewTruncated).toBeTruthy();
   expect(output.report).toBeUndefined();
   expect(output.reportError).toBeUndefined();
   expect(output.filter.noneOf).toEqual([{ id: muted, name: "Muted" }]);

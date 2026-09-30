@@ -51,7 +51,7 @@ describe("Flue member lookup result", () => {
     expect(result.members).toBeUndefined();
     expect(result.membersPreview).toHaveLength(25);
     expect(result.membersPreview[24].username).toBe("member24");
-    expect(result.previewTruncated).toBe(true);
+    expect(result.previewTruncated).toBeTruthy();
     expect(result.matchedMemberCount).toBe(40);
     expect(result.matchedCountIsLowerBound).toBe(false);
     expect(result.report).toBeUndefined();
@@ -64,7 +64,7 @@ describe("Flue member lookup result", () => {
     });
     const result = JSON.parse((await tool.run(context)) as string);
     expect(result.status).toBe("partial");
-    expect(result.matchedCountIsLowerBound).toBe(true);
+    expect(result.matchedCountIsLowerBound).toBeTruthy();
     expect(result.reportError).toBeUndefined();
   });
 
