@@ -25,19 +25,21 @@ import type { InferInput, InferOutput } from "valibot";
 
 import type { DiscordRestTransport } from "#/reader.ts";
 
-const snowflake = pipe(string(), regex(/^\d{17,20}$/));
 const roleList = optional(
   pipe(
+    // oxlint-disable-next-line unicorn/max-nested-calls
     array(pipe(string(), trim(), minLength(1), maxLength(100))),
     maxLength(25),
   ),
   [],
 );
+const snowflake = pipe(string(), regex(/^\d{17,20}$/));
 
 const memberRoleFilterSchema = pipe(
   strictObject({
     allOf: roleList,
     anyOf: roleList,
+    // oxlint-disable-next-line unicorn/max-nested-calls
     memberType: optional(picklist(["all", "humans", "bots"]), "all"),
     noneOf: roleList,
   }),
@@ -88,7 +90,7 @@ interface MemberLookupResult {
   roleSelectionIssues?: RoleSelectionIssue[];
 }
 
-const rolesSchema = array(object({ id: snowflake, name: string() }));
+// oxlint-disable unicorn/max-nested-calls
 const membersSchema = array(
   object({
     nick: optional(nullable(string())),
@@ -101,6 +103,8 @@ const membersSchema = array(
     }),
   }),
 );
+// oxlint-enable unicorn/max-nested-calls
+const rolesSchema = array(object({ id: snowflake, name: string() }));
 
 /** Resolve names once; an unknown excluded role must never silently match everyone. */
 const resolveMemberRoles = (

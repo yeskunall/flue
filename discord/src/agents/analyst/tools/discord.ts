@@ -59,6 +59,7 @@ const useDiscordTools = (reader: DiscordReader): void => {
 
     description:
       "Find channels whose latest bot-visible message is older than a threshold. This fetches only one latest visible message per channel and reports channels with unavailable history separately.",
+    // oxlint-disable unicorn/max-nested-calls
     input: object({
       inactiveDays: optional(
         pipe(
@@ -70,6 +71,7 @@ const useDiscordTools = (reader: DiscordReader): void => {
         30,
       ),
     }),
+    // oxlint-enable unicorn/max-nested-calls
     run: ({ data }) =>
       asToolJson(reader.getInactiveChannels(data.inactiveDays)),
   });
@@ -88,6 +90,7 @@ const useDiscordTools = (reader: DiscordReader): void => {
 
     description:
       "Fetch recent moderation and administrative actions from the guild audit log. Requires View Audit Log and is limited to Discord’s roughly 45-day retention window.",
+    // oxlint-disable unicorn/max-nested-calls
     input: object({
       days: optional(
         pipe(
@@ -99,6 +102,7 @@ const useDiscordTools = (reader: DiscordReader): void => {
         7,
       ),
     }),
+    // oxlint-enable unicorn/max-nested-calls
     run: ({ data }) => asToolJson(reader.getRecentAuditLog(data.days)),
   });
 };
