@@ -27,6 +27,7 @@ export default defineConfig({
     "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
     "import/no-named-export": "off",
     "max-params": ["warn", { max: 5 }],
+    "max-statements": "off",
     "no-array-constructor": "error",
     "no-case-declarations": "error",
     "no-constant-binary-expression": [
@@ -45,6 +46,7 @@ export default defineConfig({
       },
     ],
     "no-magic-numbers": ["warn", { ignore: [0, 1, 2] }],
+    "no-nested-ternary": "off",
     "no-prototype-builtins": "error",
     "no-regex-spaces": "error",
     "no-unused-vars": ["error", { reportVarsOnlyUsedAsTypes: true }],
@@ -62,6 +64,9 @@ export default defineConfig({
     "typescript/no-namespace": "error",
     "typescript/no-require-imports": "error",
     "typescript/no-unsafe-function-type": "error",
+    "unicorn/no-nested-ternary": "off",
+    "unicorn/prefer-logical-operator-over-ternary": "off",
+    "unicorn/prefer-ternary": "off",
     "vitest/no-importing-vitest-globals": "off",
     "vitest/prefer-lowercase-title": [
       "warn",
