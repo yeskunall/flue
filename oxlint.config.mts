@@ -26,6 +26,7 @@ export default defineConfig({
   rules: {
     "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
     "import/no-named-export": "off",
+    "max-params": ["warn", { max: 5 }],
     "no-array-constructor": "error",
     "no-case-declarations": "error",
     "no-constant-binary-expression": [
