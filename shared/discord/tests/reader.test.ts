@@ -1,4 +1,8 @@
-import { PermissionFlagsBits, Routes } from "discord-api-types/v10";
+import {
+  PermissionFlagsBits,
+  RESTJSONErrorCodes,
+  Routes,
+} from "discord-api-types/v10";
 import { describe, expect, it } from "vitest";
 
 import { DiscordReader } from "#/reader.ts";
@@ -221,7 +225,7 @@ describe("DiscordReader server data", () => {
         || route === Routes.guildActiveThreads("123456789012345678")
       ) {
         throw Object.assign(new Error("Missing Access"), {
-          code: 50_001,
+          code: RESTJSONErrorCodes.MissingAccess,
           status: 403,
         });
       }
@@ -358,7 +362,7 @@ describe("DiscordReader message scans", () => {
         }
         if (route === Routes.channelMessages("private")) {
           throw Object.assign(new Error("Missing Permissions"), {
-            code: 50_013,
+            code: RESTJSONErrorCodes.MissingPermissions,
             status: 403,
           });
         }
@@ -588,7 +592,7 @@ describe("DiscordReader message scans", () => {
           }
           if (route === Routes.channelMessages("private")) {
             throw Object.assign(new Error("Missing Access"), {
-              code: 50_001,
+              code: RESTJSONErrorCodes.MissingAccess,
               status: 403,
             });
           }
@@ -676,7 +680,7 @@ describe("DiscordReader optional resources", () => {
     const discord = reader(async route => {
       if (route === Routes.guildScheduledEvents("123456789012345678")) {
         throw Object.assign(new Error("Missing Access"), {
-          code: 50_001,
+          code: RESTJSONErrorCodes.MissingAccess,
           status: 403,
         });
       }
@@ -751,7 +755,7 @@ describe("DiscordReader optional resources", () => {
     const discord = reader(async route => {
       if (route === Routes.guildAuditLog("123456789012345678")) {
         throw Object.assign(new Error("Missing Permissions"), {
-          code: 50_013,
+          code: RESTJSONErrorCodes.MissingPermissions,
           status: 403,
         });
       }

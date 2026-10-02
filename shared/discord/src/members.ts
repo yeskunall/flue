@@ -25,11 +25,18 @@ import type { InferInput, InferOutput } from "valibot";
 
 import type { DiscordRestTransport } from "#/reader.ts";
 
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
+const HTTP_UNAUTHORIZED = 401;
+const MAX_MEMBERS_PER_PAGE = 1000;
+const MAX_MEMBERS_PER_SCAN = 100_000;
+const MEMBER_LOOKUP_TIMEOUT_MS = 120_000;
+
 const roleList = optional(
   pipe(
     // oxlint-disable-next-line unicorn/max-nested-calls
-    array(pipe(string(), trim(), minLength(1), maxLength(100))),
-    maxLength(25),
+    array(pipe(string(), trim(), minLength(1), maxLength(100))), // oxlint-disable-line no-magic-numbers
+    maxLength(25), // oxlint-disable-line no-magic-numbers
   ),
   [],
 );
@@ -208,16 +215,16 @@ const findMembersByRoles = async (
   parse(snowflake, guildId);
   const positiveInteger = pipe(number(), integer(), minValue(1));
   const pageSize = parse(
-    pipe(positiveInteger, maxValue(1000)),
-    options.pageSize ?? 1000,
+    pipe(positiveInteger, maxValue(MAX_MEMBERS_PER_PAGE)),
+    options.pageSize ?? MAX_MEMBERS_PER_PAGE,
   );
   const maxMembers = parse(
-    pipe(positiveInteger, maxValue(100_000)),
-    options.maxMembers ?? 100_000,
+    pipe(positiveInteger, maxValue(MAX_MEMBERS_PER_SCAN)),
+    options.maxMembers ?? MAX_MEMBERS_PER_SCAN,
   );
   const now = options.now ?? (() => new Date());
   const startedAt = now().toISOString();
-  const timeout = AbortSignal.timeout(120_000);
+  const timeout = AbortSignal.timeout(MEMBER_LOOKUP_TIMEOUT_MS);
   const signal = options.signal
     ? AbortSignal.any([options.signal, timeout])
     : timeout;
@@ -328,7 +335,7 @@ const findMembersByRoles = async (
     }
     return finish(
       "partial",
-      "The 100,000-member safety limit (or a lower configured limit) was reached; the list is incomplete.",
+      `The ${MAX_MEMBERS_PER_SCAN.toLocaleString("en-US")}-member safety limit (or a lower configured limit) was reached; the list is incomplete.`,
     );
   } catch (error) {
     if (options.signal?.aborted) {
@@ -349,12 +356,12 @@ const findMembersByRoles = async (
       error && typeof error === "object" && "status" in error
         ? error.status
         : undefined;
-    if (httpStatus === 401) {
+    if (httpStatus === HTTP_UNAUTHORIZED) {
       return finish(status, "Discord rejected the bot token.", [
         "Valid Discord bot token",
       ]);
     }
-    if (httpStatus === 403 || httpStatus === 404) {
+    if (httpStatus === HTTP_FORBIDDEN || httpStatus === HTTP_NOT_FOUND) {
       return scope === "members"
         ? finish(
             status,
@@ -407,7 +414,7 @@ const getWithinDeadline = async (
 };
 
 const compareIds = (left: string, right: string): number =>
-  BigInt(left) < BigInt(right) ? -1 : BigInt(left) > BigInt(right) ? 1 : 0;
+  BigInt(left) < BigInt(right) ? -1 : BigInt(left) > BigInt(right) ? 1 : 0; // oxlint-disable-line no-magic-numbers
 
 export {
   findMembersByRoles,

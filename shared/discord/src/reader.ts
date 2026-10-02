@@ -3,6 +3,7 @@ import {
   ChannelType,
   GuildScheduledEventStatus,
   PermissionFlagsBits,
+  RESTJSONErrorCodes,
   Routes,
 } from "discord-api-types/v10";
 import type {
@@ -95,6 +96,11 @@ interface ChannelScanResult {
 }
 
 const DISCORD_EPOCH = 1_420_070_400_000n;
+const DISCORD_PAGE_SIZE_LIMIT = 100;
+const DISCORD_SNOWFLAKE_TIMESTAMP_SHIFT = 22n;
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
+const MAX_AUDIT_LOOKBACK_DAYS = 45;
 const MILLISECONDS_PER_DAY = 86_400_000;
 const SOURCE = "Discord REST API v10" as const;
 
@@ -113,7 +119,7 @@ const DEFAULT_OPTIONS: Omit<ResolvedDiscordReaderOptions, "now"> = {
   maxLookbackDays: 30,
   maxMessagesPerChannel: 500,
   maxTotalMessages: 5000,
-  pageSize: 100,
+  pageSize: DISCORD_PAGE_SIZE_LIMIT,
 };
 
 class DiscordReader {
@@ -159,7 +165,7 @@ class DiscordReader {
       ),
       now: options.now ?? (() => new Date()),
       pageSize: Math.min(
-        100,
+        DISCORD_PAGE_SIZE_LIMIT,
         positiveInteger(
           options.pageSize ?? DEFAULT_OPTIONS.pageSize,
           "pageSize",
@@ -622,7 +628,11 @@ class DiscordReader {
   }
 
   async getRecentAuditLog(days: number) {
-    const observationPeriod = this.#periodForDays(days, 45, "audit log");
+    const observationPeriod = this.#periodForDays(
+      days,
+      MAX_AUDIT_LOOKBACK_DAYS,
+      "audit log",
+    );
     const entries: Record<string, unknown>[] = [];
     const users = new Map<string, string>();
     let before: string | undefined = undefined;
@@ -634,7 +644,7 @@ class DiscordReader {
         && !reachedPeriodStart
       ) {
         const limit = Math.min(
-          100,
+          DISCORD_PAGE_SIZE_LIMIT,
           this.#options.maxAuditEntries - entries.length,
         );
         const query = new URLSearchParams({ limit: String(limit) });
@@ -678,7 +688,7 @@ class DiscordReader {
         }
 
         const nextBefore = expectString(
-          pageEntries.at(-1)?.id,
+          pageEntries.at(-1)?.id, // oxlint-disable-line no-magic-numbers
           "oldest audit log entry.id",
         );
         if (nextBefore === before || pageEntries.length < limit) {
@@ -903,7 +913,7 @@ class DiscordReader {
           };
         });
         messages.push(...mappedPage);
-        const oldest = mappedPage.at(-1);
+        const oldest = mappedPage.at(-1); // oxlint-disable-line no-magic-numbers
         if (
           !oldest
           || Date.parse(oldest.timestamp) <= Date.parse(period.start)
@@ -1148,12 +1158,13 @@ const isHiddenOrMissingPermission = (error: unknown): boolean => {
   const status = "status" in error ? error.status : undefined;
   const code = "code" in error ? error.code : undefined;
   return (
-    status === 403
-    || status === 404
-    || code === 50_001
-    || code === 50_013
-    || code === "50001"
-    || code === "50013"
+    status === HTTP_FORBIDDEN
+    || status === HTTP_NOT_FOUND
+    || code === RESTJSONErrorCodes.MissingAccess
+    || code === RESTJSONErrorCodes.MissingPermissions
+    // Preserve compatibility with transports that surface these codes as strings.
+    || code === String(RESTJSONErrorCodes.MissingAccess)
+    || code === String(RESTJSONErrorCodes.MissingPermissions)
   );
 };
 
@@ -1239,7 +1250,8 @@ const auditLogActionName = (action: number): string =>
   AuditLogEvent[action] ?? `Unknown(${action})`;
 
 const snowflakeTimestamp = (id: string): string => {
-  const milliseconds = (BigInt(id) >> 22n) + DISCORD_EPOCH;
+  const milliseconds =
+    (BigInt(id) >> DISCORD_SNOWFLAKE_TIMESTAMP_SHIFT) + DISCORD_EPOCH;
   return new Date(Number(milliseconds)).toISOString();
 };
 

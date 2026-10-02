@@ -3,6 +3,8 @@ import { defineTool } from "@flue/runtime";
 import { memberRoleFilterSchema } from "#/discord";
 import type { DiscordReader } from "#/discord";
 
+const MEMBER_PREVIEW_LIMIT = 25;
+
 export default function createMemberLookupTool(
   reader: Pick<DiscordReader, "getMembersByRoles">,
 ) {
@@ -31,8 +33,8 @@ export default function createMemberLookupTool(
         {
           ...summary,
           matchedCountIsLowerBound: result.status === "partial",
-          membersPreview: members.slice(0, 25),
-          previewTruncated: members.length > 25,
+          membersPreview: members.slice(0, MEMBER_PREVIEW_LIMIT),
+          previewTruncated: members.length > MEMBER_PREVIEW_LIMIT,
         },
         undefined,
         2,

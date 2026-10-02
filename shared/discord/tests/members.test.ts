@@ -2,7 +2,7 @@
 // oxlint-disable-next-line import/no-nodejs-modules
 import { setImmediate } from "node:timers/promises";
 
-import { Routes } from "discord-api-types/v10";
+import { RESTJSONErrorCodes, Routes } from "discord-api-types/v10";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -289,7 +289,7 @@ describe("REST member lookup", () => {
     expect.hasAssertions();
     const result = await findMembersByRoles(
       transport(async () => {
-        throw { code: 50_001, status: 403 };
+        throw { code: RESTJSONErrorCodes.MissingAccess, status: 403 };
       }),
       GUILD,
       { allOf: ["Verified"] },
@@ -329,7 +329,7 @@ describe("REST member lookup", () => {
         if (!options?.query?.has("after")) {
           return [member(1, [VERIFIED])];
         }
-        throw { code: 50_001, status: 403 };
+        throw { code: RESTJSONErrorCodes.MissingAccess, status: 403 };
       }),
       GUILD,
       { allOf: ["Verified"] },

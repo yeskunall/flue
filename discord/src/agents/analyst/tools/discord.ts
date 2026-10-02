@@ -17,9 +17,9 @@ const recentDays = optional(
     number("The observation period must be a number of days."),
     integer("The observation period must use whole days."),
     minValue(1, "The observation period must be at least one day."),
-    maxValue(30, "Message activity is limited to the most recent 30 days."),
+    maxValue(30, "Message activity is limited to the most recent 30 days."), // oxlint-disable-line no-magic-numbers
   ),
-  7,
+  7, // oxlint-disable-line no-magic-numbers
 );
 
 const useDiscordTools = (reader: DiscordReader): void => {
@@ -66,9 +66,9 @@ const useDiscordTools = (reader: DiscordReader): void => {
           number("The inactivity threshold must be a number of days."),
           integer("The inactivity threshold must use whole days."),
           minValue(1, "The inactivity threshold must be at least one day."),
-          maxValue(365, "The inactivity threshold is limited to 365 days."),
+          maxValue(365, "The inactivity threshold is limited to 365 days."), // oxlint-disable-line no-magic-numbers
         ),
-        30,
+        30, // oxlint-disable-line no-magic-numbers
       ),
     }),
     // oxlint-enable unicorn/max-nested-calls
@@ -97,9 +97,9 @@ const useDiscordTools = (reader: DiscordReader): void => {
           number("The audit period must be a number of days."),
           integer("The audit period must use whole days."),
           minValue(1, "The audit period must be at least one day."),
-          maxValue(45, "Discord audit-log history is limited to 45 days."),
+          maxValue(45, "Discord audit-log history is limited to 45 days."), // oxlint-disable-line no-magic-numbers
         ),
-        7,
+        7, // oxlint-disable-line no-magic-numbers
       ),
     }),
     // oxlint-enable unicorn/max-nested-calls
