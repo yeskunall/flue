@@ -299,17 +299,19 @@ const assessPermissionRisks = (input: {
       for (const riskPermission of ROLE_RISK_PERMISSIONS) {
         if (hasPermission(permissions, riskPermission.flag)) {
           const isEveryone = role.id === input.guildId;
+          let explanation =
+            "This assignable role grants a high-impact server permission. Review who can receive it.";
+          if (isEveryone) {
+            explanation =
+              "The @everyone role grants a high-impact permission to every server member.";
+          } else if (riskPermission.name === "Administrator") {
+            explanation =
+              "This assignable role bypasses channel-specific permission checks. Review who can receive it.";
+          }
           risks.push({
-            explanation: isEveryone
-              ? "The @everyone role grants a high-impact permission to every server member."
-              : riskPermission.name === "Administrator"
-                ? "This assignable role bypasses channel-specific permission checks. Review who can receive it."
-                : "This assignable role grants a high-impact server permission. Review who can receive it.",
+            explanation,
             permission: riskPermission.name,
-            severity:
-              isEveryone && riskPermission.severity === "high"
-                ? "high"
-                : riskPermission.severity,
+            severity: riskPermission.severity,
             subjectId: role.id,
             subjectName: role.name,
             subjectType: "role",

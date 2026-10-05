@@ -417,6 +417,24 @@ describe("REST member lookup", () => {
     expect(result.reason).toContain("503");
   });
 
+  it("omits an HTTP suffix when a member lookup fails without an HTTP status", async () => {
+    expect.hasAssertions();
+    const result = await findMembersByRoles(
+      transport(async () => {
+        throw new Error("Transport disconnected");
+      }),
+      GUILD,
+      { allOf: ["Verified"] },
+    );
+
+    expect(result).toMatchObject({
+      reason:
+        "Discord member lookup failed. Retry later; this is not a confirmed permission failure.",
+      requiredAccess: [],
+      status: "unavailable",
+    });
+  });
+
   it("rejects malformed member data rather than assuming someone lacks a role", async () => {
     expect.hasAssertions();
     await expect(

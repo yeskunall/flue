@@ -544,14 +544,16 @@ class DiscordReader {
           );
         })
         .map(event => {
-          const metadata =
-            event.entity_metadata === null
-            || event.entity_metadata === undefined
-              ? undefined
-              : expectRecord(
-                  event.entity_metadata,
-                  "scheduled event.entity_metadata",
-                );
+          let metadata: Record<string, unknown> | undefined = undefined;
+          if (
+            event.entity_metadata !== null
+            && event.entity_metadata !== undefined
+          ) {
+            metadata = expectRecord(
+              event.entity_metadata,
+              "scheduled event.entity_metadata",
+            );
+          }
           return {
             channelId: optionalNullableString(
               event.channel_id,
@@ -980,16 +982,16 @@ class DiscordReader {
       );
       const messages = expectArray(page, `latest message for #${channel.name}`);
       const [first] = messages;
+      let latestVisibleMessageAt: string | null = null;
+      if (first !== undefined) {
+        latestVisibleMessageAt = expectString(
+          expectRecord(first, `latest message for #${channel.name}`).timestamp,
+          "message.timestamp",
+        );
+      }
       return {
         ...channelIdentity(channel),
-        latestVisibleMessageAt:
-          first === undefined
-            ? null
-            : expectString(
-                expectRecord(first, `latest message for #${channel.name}`)
-                  .timestamp,
-                "message.timestamp",
-              ),
+        latestVisibleMessageAt,
         status: "available",
       };
     } catch (error) {

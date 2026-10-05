@@ -49,6 +49,7 @@ export default defineConfig({
     "no-nested-ternary": "off",
     "no-prototype-builtins": "error",
     "no-regex-spaces": "error",
+    "no-ternary": "off",
     "no-unused-vars": ["error", { reportVarsOnlyUsedAsTypes: true }],
     "no-useless-assignment": "error",
     "no-var": "error",

@@ -240,4 +240,32 @@ describe("assessPermissionRisks", () => {
       },
     ]);
   });
+
+  it("explains non-Administrator assignable permissions without claiming an Administrator bypass", () => {
+    expect.hasAssertions();
+    expect(
+      assessPermissionRisks({
+        channels: [],
+        guildId: "guild",
+        roles: [
+          {
+            id: "manager",
+            managed: false,
+            name: "Managers",
+            permissions: PermissionFlagsBits.ManageGuild.toString(),
+          },
+        ],
+      }),
+    ).toStrictEqual([
+      {
+        explanation:
+          "This assignable role grants a high-impact server permission. Review who can receive it.",
+        permission: "ManageGuild",
+        severity: "high",
+        subjectId: "manager",
+        subjectName: "Managers",
+        subjectType: "role",
+      },
+    ]);
+  });
 });

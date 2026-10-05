@@ -625,6 +625,48 @@ describe("DiscordReader message scans", () => {
       },
     });
   });
+
+  it("reports a successful empty message page as available with no visible messages", async () => {
+    expect.hasAssertions();
+    const discord = reader(
+      withBotPermissions(READABLE_CHANNEL_PERMISSIONS, async route => {
+        if (route === Routes.guildChannels("123456789012345678")) {
+          return [
+            {
+              id: "empty",
+              name: "empty-channel",
+              permission_overwrites: [],
+              position: 0,
+              type: 0,
+            },
+          ];
+        }
+        if (route === Routes.channelMessages("empty")) {
+          return [];
+        }
+        throw new Error(`Unexpected route: ${route}`);
+      }),
+    );
+
+    await expect(discord.getInactiveChannels(30)).resolves.toMatchObject({
+      calculations: {
+        noVisibleMessages: [
+          { channelId: "empty", channelName: "empty-channel" },
+        ],
+      },
+      facts: {
+        latestVisibleMessages: [
+          {
+            channelId: "empty",
+            channelName: "empty-channel",
+            latestVisibleMessageAt: null,
+            status: "available",
+          },
+        ],
+      },
+      unavailable: [],
+    });
+  });
 });
 
 describe("DiscordReader optional resources", () => {
@@ -674,6 +716,35 @@ describe("DiscordReader optional resources", () => {
       unavailable: [],
     });
   });
+
+  it.each([
+    { name: "null", value: null },
+    { name: "missing", value: undefined },
+  ])(
+    "leaves location undefined when scheduled event metadata is $name",
+    async ({ value }) => {
+      expect.hasAssertions();
+      const discord = reader(async route => {
+        if (route !== Routes.guildScheduledEvents("123456789012345678")) {
+          throw new Error(`Unexpected route: ${route}`);
+        }
+        return [
+          {
+            channel_id: null,
+            entity_metadata: value,
+            id: "event",
+            name: "Town hall",
+            scheduled_start_time: "2026-08-29T17:00:00.000Z",
+            status: 1,
+          },
+        ];
+      });
+
+      const result = await discord.getUpcomingEvents();
+      expect(result.facts.events).toHaveLength(1);
+      expect(result.facts.events?.[0]).toHaveProperty("location", undefined);
+    },
+  );
 
   it("uses null rather than zero when scheduled events are unavailable", async () => {
     expect.hasAssertions();

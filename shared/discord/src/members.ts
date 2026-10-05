@@ -362,26 +362,35 @@ const findMembersByRoles = async (
       ]);
     }
     if (httpStatus === HTTP_FORBIDDEN || httpStatus === HTTP_NOT_FOUND) {
-      return scope === "members"
-        ? finish(
-            status,
-            "Discord denied member listing. Enable or obtain approval for Server Members intent, and verify the bot belongs to this server.",
-            [
-              "GUILD_MEMBERS (Server Members intent)",
-              "Bot membership in the configured server",
-            ],
-          )
-        : finish(
-            status,
-            "Discord did not allow this bot to list roles in the configured server.",
-            ["Bot membership in the configured server"],
-          );
+      if (scope === "members") {
+        return finish(
+          status,
+          "Discord denied member listing. Enable or obtain approval for Server Members intent, and verify the bot belongs to this server.",
+          [
+            "GUILD_MEMBERS (Server Members intent)",
+            "Bot membership in the configured server",
+          ],
+        );
+      }
+      return finish(
+        status,
+        "Discord did not allow this bot to list roles in the configured server.",
+        ["Bot membership in the configured server"],
+      );
+    }
+    if (timeout.aborted) {
+      return finish(
+        status,
+        "The two-minute member lookup time limit was reached; the list is incomplete.",
+      );
+    }
+    let reason = "Discord member lookup failed";
+    if (typeof httpStatus === "number") {
+      reason += ` (HTTP ${httpStatus})`;
     }
     return finish(
       status,
-      timeout.aborted
-        ? "The two-minute member lookup time limit was reached; the list is incomplete."
-        : `Discord member lookup failed${typeof httpStatus === "number" ? ` (HTTP ${httpStatus})` : ""}. Retry later; this is not a confirmed permission failure.`,
+      `${reason}. Retry later; this is not a confirmed permission failure.`,
     );
   }
 };
@@ -413,8 +422,17 @@ const getWithinDeadline = async (
   }
 };
 
-const compareIds = (left: string, right: string): number =>
-  BigInt(left) < BigInt(right) ? -1 : BigInt(left) > BigInt(right) ? 1 : 0; // oxlint-disable-line no-magic-numbers
+const compareIds = (left: string, right: string): number => {
+  const leftId = BigInt(left);
+  const rightId = BigInt(right);
+  if (leftId < rightId) {
+    return -1; // oxlint-disable-line no-magic-numbers
+  }
+  if (leftId > rightId) {
+    return 1;
+  }
+  return 0;
+};
 
 export {
   findMembersByRoles,
