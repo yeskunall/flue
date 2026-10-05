@@ -69,6 +69,7 @@ export default defineConfig({
     "unicorn/prefer-logical-operator-over-ternary": "off",
     "unicorn/prefer-ternary": "off",
     "vitest/no-importing-vitest-globals": "off",
+    "vitest/prefer-describe-function-title": "off",
     "vitest/prefer-lowercase-title": [
       "warn",
       { allowedPrefixes: ["DiscordReader", "Flue", "REST"] },
