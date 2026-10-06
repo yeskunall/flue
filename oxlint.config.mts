@@ -25,6 +25,7 @@ export default defineConfig({
   plugins: ["typescript", "unicorn", "oxc", "import", "vitest"],
   rules: {
     "import/consistent-type-specifier-style": ["warn", "prefer-top-level"],
+    "import/no-duplicates": ["warn", { preferInline: false }],
     "import/no-named-export": "off",
     "max-params": ["warn", { max: 5 }],
     "max-statements": "off",
@@ -34,7 +35,7 @@ export default defineConfig({
       "error",
       { checkRelationalComparisons: false },
     ],
-    "no-duplicate-imports": ["warn", { allowSeparateTypeImports: true }],
+    "no-duplicate-imports": "off",
     "no-empty": "error",
     "no-fallthrough": "error",
     "no-irregular-whitespace": [
