@@ -18,10 +18,22 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    name: Checks
+  validate:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Check formatting
+            command: pnpm format:check
+          - name: Lint
+            command: pnpm lint --format github
+          - name: Typecheck
+            command: pnpm typecheck
+          - name: Test
+            command: pnpm test
 
     steps:
       - name: Check out repository
@@ -40,14 +52,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check formatting
-        run: pnpm format:check
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Lint
-        run: pnpm lint --format github
+  checks:
+    name: Checks
+    needs: validate
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every validation
+        run: test "${{ needs.validate.result }}" = success
