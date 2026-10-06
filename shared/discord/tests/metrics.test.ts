@@ -1,5 +1,5 @@
 import { ChannelType, PermissionFlagsBits } from "discord-api-types/v10";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   assessPermissionRisks,
@@ -12,86 +12,87 @@ import type {
 } from "#/metrics.ts";
 
 const PERIOD = {
-  start: "2026-08-20T12:00:00.000Z",
   end: "2026-08-27T12:00:00.000Z",
+  start: "2026-08-20T12:00:00.000Z",
 };
 
 describe("calculateMessageActivity", () => {
-  test("counts only messages inside the observation period and ranks ties by channel name", () => {
+  it("counts only messages inside the observation period and ranks ties by channel name", () => {
+    expect.hasAssertions();
     const scans: ChannelMessageScan[] = [
       {
         channelId: "1",
         channelName: "support",
-        status: "complete",
         messages: [
           { id: "m1", timestamp: "2026-08-27T11:00:00.000Z" },
           { id: "m2", timestamp: "2026-08-21T12:00:00.000Z" },
           { id: "old", timestamp: "2026-08-20T11:59:59.000Z" },
         ],
+        status: "complete",
       },
       {
         channelId: "2",
         channelName: "announcements",
-        status: "complete",
         messages: [
           { id: "m3", timestamp: "2026-08-26T12:00:00.000Z" },
           { id: "m4", timestamp: "2026-08-25T12:00:00.000Z" },
         ],
+        status: "complete",
       },
     ];
 
-    expect(calculateMessageActivity(scans, PERIOD)).toEqual({
-      visibleMessageCount: 4,
+    expect(calculateMessageActivity(scans, PERIOD)).toStrictEqual({
+      cappedChannels: [],
       ranking: [
         {
           channelId: "2",
           channelName: "announcements",
-          visibleMessageCount: 2,
           countIsLowerBound: false,
+          visibleMessageCount: 2,
         },
         {
           channelId: "1",
           channelName: "support",
-          visibleMessageCount: 2,
           countIsLowerBound: false,
+          visibleMessageCount: 2,
         },
       ],
-      cappedChannels: [],
       unavailableChannels: [],
+      visibleMessageCount: 4,
     });
   });
 
-  test("marks capped counts as lower bounds and keeps unavailable channels out of the ranking", () => {
+  it("marks capped counts as lower bounds and keeps unavailable channels out of the ranking", () => {
+    expect.hasAssertions();
     const scans: ChannelMessageScan[] = [
       {
         channelId: "1",
         channelName: "busy",
-        status: "capped",
         messages: [
           { id: "m1", timestamp: "2026-08-27T11:00:00.000Z" },
           { id: "m2", timestamp: "2026-08-27T10:00:00.000Z" },
         ],
+        status: "capped",
       },
       {
         channelId: "2",
         channelName: "private",
-        status: "unavailable",
         messages: [],
         reason: "Missing View Channel or Read Message History permission.",
+        status: "unavailable",
       },
     ];
 
-    expect(calculateMessageActivity(scans, PERIOD)).toEqual({
-      visibleMessageCount: 2,
+    expect(calculateMessageActivity(scans, PERIOD)).toStrictEqual({
+      cappedChannels: ["busy"],
       ranking: [
         {
           channelId: "1",
           channelName: "busy",
-          visibleMessageCount: 2,
           countIsLowerBound: true,
+          visibleMessageCount: 2,
         },
       ],
-      cappedChannels: ["busy"],
       unavailableChannels: [
         {
           channelId: "2",
@@ -99,36 +100,40 @@ describe("calculateMessageActivity", () => {
           reason: "Missing View Channel or Read Message History permission.",
         },
       ],
+      visibleMessageCount: 2,
     });
   });
 });
 
 describe("calculateInactiveChannels", () => {
-  test("separates inactive, empty, active, and permission-blocked channels", () => {
+  it("separates inactive, empty, active, and permission-blocked channels", () => {
+    expect.hasAssertions();
     const observations: LatestMessageObservation[] = [
       {
         channelId: "1",
         channelName: "active",
-        status: "available",
         latestVisibleMessageAt: "2026-08-26T12:00:00.000Z",
+        status: "available",
       },
       {
         channelId: "2",
         channelName: "old",
-        status: "available",
         latestVisibleMessageAt: "2026-07-01T12:00:00.000Z",
+        status: "available",
       },
       {
         channelId: "3",
         channelName: "empty",
-        status: "available",
+        // No visible message is represented by an explicit null timestamp.
+        // oxlint-disable-next-line unicorn/no-null
         latestVisibleMessageAt: null,
+        status: "available",
       },
       {
         channelId: "4",
         channelName: "private",
-        status: "unavailable",
         reason: "Missing View Channel or Read Message History permission.",
+        status: "unavailable",
       },
     ];
 
@@ -137,17 +142,17 @@ describe("calculateInactiveChannels", () => {
         observedAt: "2026-08-27T12:00:00.000Z",
         thresholdDays: 30,
       }),
-    ).toEqual({
+    ).toStrictEqual({
+      activeChannelCount: 1,
       inactive: [
         {
           channelId: "2",
           channelName: "old",
-          latestVisibleMessageAt: "2026-07-01T12:00:00.000Z",
           inactiveForDays: 57,
+          latestVisibleMessageAt: "2026-07-01T12:00:00.000Z",
         },
       ],
       noVisibleMessages: [{ channelId: "3", channelName: "empty" }],
-      activeChannelCount: 1,
       unavailableChannels: [
         {
           channelId: "4",
@@ -160,77 +165,106 @@ describe("calculateInactiveChannels", () => {
 });
 
 describe("assessPermissionRisks", () => {
-  test("flags high-impact assignable roles and everyone channel overrides without alleging abuse", () => {
+  it("flags high-impact assignable roles and everyone channel overrides without alleging abuse", () => {
+    expect.hasAssertions();
     const administrator = PermissionFlagsBits.Administrator.toString();
     const mentionEveryone = PermissionFlagsBits.MentionEveryone.toString();
     const manageMessages = PermissionFlagsBits.ManageMessages.toString();
 
     expect(
       assessPermissionRisks({
-        guildId: "guild",
-        roles: [
-          {
-            id: "guild",
-            name: "@everyone",
-            permissions: mentionEveryone,
-            managed: false,
-          },
-          {
-            id: "admin",
-            name: "Operations",
-            permissions: administrator,
-            managed: false,
-          },
-          {
-            id: "managed",
-            name: "Managed integration",
-            permissions: administrator,
-            managed: true,
-          },
-        ],
         channels: [
           {
             id: "channel",
             name: "general",
-            type: ChannelType.GuildText,
             permission_overwrites: [
               {
-                id: "guild",
-                type: 0,
                 allow: manageMessages,
                 deny: "0",
+                id: "guild",
+                type: 0,
               },
             ],
+            type: ChannelType.GuildText,
+          },
+        ],
+        guildId: "guild",
+        roles: [
+          {
+            id: "guild",
+            managed: false,
+            name: "@everyone",
+            permissions: mentionEveryone,
+          },
+          {
+            id: "admin",
+            managed: false,
+            name: "Operations",
+            permissions: administrator,
+          },
+          {
+            id: "managed",
+            managed: true,
+            name: "Managed integration",
+            permissions: administrator,
           },
         ],
       }),
-    ).toEqual([
+    ).toStrictEqual([
       {
-        severity: "high",
-        subjectType: "role",
-        subjectId: "admin",
-        subjectName: "Operations",
-        permission: "Administrator",
         explanation:
           "This assignable role bypasses channel-specific permission checks. Review who can receive it.",
+        permission: "Administrator",
+        severity: "high",
+        subjectId: "admin",
+        subjectName: "Operations",
+        subjectType: "role",
       },
       {
-        severity: "high",
-        subjectType: "channel",
-        subjectId: "channel",
-        subjectName: "general",
-        permission: "ManageMessages",
         explanation:
           "The @everyone channel override grants a high-impact permission to every server member.",
+        permission: "ManageMessages",
+        severity: "high",
+        subjectId: "channel",
+        subjectName: "general",
+        subjectType: "channel",
       },
       {
-        severity: "medium",
-        subjectType: "role",
-        subjectId: "guild",
-        subjectName: "@everyone",
-        permission: "MentionEveryone",
         explanation:
           "The @everyone role grants a high-impact permission to every server member.",
+        permission: "MentionEveryone",
+        severity: "medium",
+        subjectId: "guild",
+        subjectName: "@everyone",
+        subjectType: "role",
+      },
+    ]);
+  });
+
+  it("explains non-Administrator assignable permissions without claiming an Administrator bypass", () => {
+    expect.hasAssertions();
+    expect(
+      assessPermissionRisks({
+        channels: [],
+        guildId: "guild",
+        roles: [
+          {
+            id: "manager",
+            managed: false,
+            name: "Managers",
+            permissions: PermissionFlagsBits.ManageGuild.toString(),
+          },
+        ],
+      }),
+    ).toStrictEqual([
+      {
+        explanation:
+          "This assignable role grants a high-impact server permission. Review who can receive it.",
+        permission: "ManageGuild",
+        severity: "high",
+        subjectId: "manager",
+        subjectName: "Managers",
+        subjectType: "role",
       },
     ]);
   });

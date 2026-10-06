@@ -1,64 +1,78 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { createMemberLookupTool } from "#/agents/analyst/tools/members.ts";
+import createMemberLookupTool from "#/agents/analyst/tools/members.ts";
 import type { MemberLookupResult } from "#/discord";
 
-function lookup(
+const lookup = (
   status: MemberLookupResult["status"] = "complete",
-): MemberLookupResult {
+): MemberLookupResult => {
   const role = { id: "100000000000000002", name: "Verified" };
+  // oxlint-disable-next-line id-length
   const members = Array.from({ length: 40 }, (_, index) => ({
-    id: String(200000000000000000n + BigInt(index)),
-    username: `member${index}`,
     displayName: `Member ${index}`,
+    id: String(200_000_000_000_000_000n + BigInt(index)),
     isBot: false,
     roleIds: [role.id],
+    username: `member${index}`,
   }));
   return {
-    source: "Discord REST API v10",
+    filter: { allOf: [role], anyOf: [], memberType: "all", noneOf: [] },
     guildId: "100000000000000001",
-    startedAt: "2026-09-01T12:00:00Z",
-    retrievedAt: "2026-09-01T12:00:01Z",
-    status,
-    filter: { allOf: [role], anyOf: [], noneOf: [], memberType: "all" },
-    roles: [role],
-    members: status === "unavailable" ? [] : members,
+    // The unavailable result must keep an explicit unknown count.
+    // oxlint-disable-next-line unicorn/no-null
     matchedMemberCount: status === "unavailable" ? null : 40,
-    scannedMemberCount: status === "unavailable" ? 0 : 40,
     maxMembers: 100_000,
+    members: status === "unavailable" ? [] : members,
     requiredAccess:
       status === "unavailable" ? ["GUILD_MEMBERS (Server Members intent)"] : [],
+    retrievedAt: "2026-09-01T12:00:01Z",
+    roles: [role],
+    scannedMemberCount: status === "unavailable" ? 0 : 40,
+    source: "Discord REST API v10",
+    startedAt: "2026-09-01T12:00:00Z",
+    status,
   };
-}
+};
 
 const context = {
-  toolCallId: "member-query",
   data: {
     allOf: ["Verified"],
     anyOf: [],
-    noneOf: [],
     memberType: "all" as const,
+    noneOf: [],
   },
-  log: { info() {}, warn() {}, error() {} },
+  log: { error() {}, info() {}, warn() {} },
+  toolCallId: "member-query",
 };
 
 describe("Flue member lookup result", () => {
-  test("returns the full count and a bounded preview without file-export fields", async () => {
+  it("returns the full count and a bounded preview without file-export fields", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup(),
     });
     const result = JSON.parse((await tool.run(context)) as string);
-    expect(result.members).toBeUndefined();
+    expect({
+      matchedCountIsLowerBound: result.matchedCountIsLowerBound,
+      matchedMemberCount: result.matchedMemberCount,
+      members: result.members,
+      previewTruncated: result.previewTruncated,
+      report: result.report,
+      reportError: result.reportError,
+    }).toStrictEqual({
+      matchedCountIsLowerBound: false,
+      matchedMemberCount: 40,
+      members: undefined,
+      previewTruncated: true,
+      report: undefined,
+      reportError: undefined,
+    });
     expect(result.membersPreview).toHaveLength(25);
     expect(result.membersPreview[24].username).toBe("member24");
-    expect(result.previewTruncated).toBe(true);
-    expect(result.matchedMemberCount).toBe(40);
-    expect(result.matchedCountIsLowerBound).toBe(false);
-    expect(result.report).toBeUndefined();
-    expect(result.reportError).toBeUndefined();
   });
 
-  test("never presents partial matches as a complete server result", async () => {
+  it("never presents partial matches as a complete server result", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup("partial"),
     });
@@ -68,7 +82,8 @@ describe("Flue member lookup result", () => {
     expect(result.reportError).toBeUndefined();
   });
 
-  test("returns unavailable rather than zero when member access is denied", async () => {
+  it("returns unavailable rather than zero when member access is denied", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => lookup("unavailable"),
     });
@@ -81,20 +96,29 @@ describe("Flue member lookup result", () => {
     );
   });
 
-  test("returns a real zero count when a complete scan finds no matching members", async () => {
+  it("returns a real zero count when a complete scan finds no matching members", async () => {
+    expect.hasAssertions();
     const tool = createMemberLookupTool({
       getMembersByRoles: async () => ({
         ...lookup(),
-        members: [],
         matchedMemberCount: 0,
+        members: [],
       }),
     });
     const result = JSON.parse((await tool.run(context)) as string);
-    expect(result.status).toBe("complete");
-    expect(result.matchedMemberCount).toBe(0);
-    expect(result.membersPreview).toEqual([]);
-    expect(result.report).toBeUndefined();
-    expect(result.reportError).toBeUndefined();
-    expect(result.previewTruncated).toBe(false);
+    expect({
+      matchedMemberCount: result.matchedMemberCount,
+      previewTruncated: result.previewTruncated,
+      report: result.report,
+      reportError: result.reportError,
+      status: result.status,
+    }).toStrictEqual({
+      matchedMemberCount: 0,
+      previewTruncated: false,
+      report: undefined,
+      reportError: undefined,
+      status: "complete",
+    });
+    expect(result.membersPreview).toStrictEqual([]);
   });
 });

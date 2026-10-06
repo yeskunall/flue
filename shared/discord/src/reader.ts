@@ -3,6 +3,7 @@ import {
   ChannelType,
   GuildScheduledEventStatus,
   PermissionFlagsBits,
+  RESTJSONErrorCodes,
   Routes,
 } from "discord-api-types/v10";
 import type {
@@ -28,16 +29,16 @@ import type {
   ObservationPeriod,
 } from "#/metrics.ts";
 
-export interface DiscordRestOptions {
+interface DiscordRestOptions {
   query?: URLSearchParams;
   signal?: AbortSignal;
 }
 
-export interface DiscordRestTransport {
-  get(route: string, options?: DiscordRestOptions): Promise<unknown>;
+interface DiscordRestTransport {
+  get: (route: string, options?: DiscordRestOptions) => Promise<unknown>;
 }
 
-export interface DiscordReaderOptions {
+interface DiscordReaderOptions {
   now?: () => Date;
   maxLookbackDays?: number;
   maxInactiveDays?: number;
@@ -95,6 +96,11 @@ interface ChannelScanResult {
 }
 
 const DISCORD_EPOCH = 1_420_070_400_000n;
+const DISCORD_PAGE_SIZE_LIMIT = 100;
+const DISCORD_SNOWFLAKE_TIMESTAMP_SHIFT = 22n;
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
+const MAX_AUDIT_LOOKBACK_DAYS = 45;
 const MILLISECONDS_PER_DAY = 86_400_000;
 const SOURCE = "Discord REST API v10" as const;
 
@@ -106,17 +112,17 @@ const MESSAGE_CHANNEL_TYPES = new Set<number>([
 ]);
 
 const DEFAULT_OPTIONS: Omit<ResolvedDiscordReaderOptions, "now"> = {
-  maxLookbackDays: 30,
-  maxInactiveDays: 365,
-  maxChannels: 50,
-  maxMessagesPerChannel: 500,
-  maxTotalMessages: 5_000,
-  maxAuditEntries: 300,
-  pageSize: 100,
   concurrency: 4,
+  maxAuditEntries: 300,
+  maxChannels: 50,
+  maxInactiveDays: 365,
+  maxLookbackDays: 30,
+  maxMessagesPerChannel: 500,
+  maxTotalMessages: 5000,
+  pageSize: DISCORD_PAGE_SIZE_LIMIT,
 };
 
-export class DiscordReader {
+class DiscordReader {
   readonly #rest: DiscordRestTransport;
   readonly #guildId: string;
   readonly #options: ResolvedDiscordReaderOptions;
@@ -129,18 +135,25 @@ export class DiscordReader {
     this.#rest = rest;
     this.#guildId = guildId;
     this.#options = {
-      now: options.now ?? (() => new Date()),
-      maxLookbackDays: positiveInteger(
-        options.maxLookbackDays ?? DEFAULT_OPTIONS.maxLookbackDays,
-        "maxLookbackDays",
+      concurrency: positiveInteger(
+        options.concurrency ?? DEFAULT_OPTIONS.concurrency,
+        "concurrency",
+      ),
+      maxAuditEntries: positiveInteger(
+        options.maxAuditEntries ?? DEFAULT_OPTIONS.maxAuditEntries,
+        "maxAuditEntries",
+      ),
+      maxChannels: positiveInteger(
+        options.maxChannels ?? DEFAULT_OPTIONS.maxChannels,
+        "maxChannels",
       ),
       maxInactiveDays: positiveInteger(
         options.maxInactiveDays ?? DEFAULT_OPTIONS.maxInactiveDays,
         "maxInactiveDays",
       ),
-      maxChannels: positiveInteger(
-        options.maxChannels ?? DEFAULT_OPTIONS.maxChannels,
-        "maxChannels",
+      maxLookbackDays: positiveInteger(
+        options.maxLookbackDays ?? DEFAULT_OPTIONS.maxLookbackDays,
+        "maxLookbackDays",
       ),
       maxMessagesPerChannel: positiveInteger(
         options.maxMessagesPerChannel ?? DEFAULT_OPTIONS.maxMessagesPerChannel,
@@ -150,20 +163,13 @@ export class DiscordReader {
         options.maxTotalMessages ?? DEFAULT_OPTIONS.maxTotalMessages,
         "maxTotalMessages",
       ),
-      maxAuditEntries: positiveInteger(
-        options.maxAuditEntries ?? DEFAULT_OPTIONS.maxAuditEntries,
-        "maxAuditEntries",
-      ),
+      now: options.now ?? (() => new Date()),
       pageSize: Math.min(
-        100,
+        DISCORD_PAGE_SIZE_LIMIT,
         positiveInteger(
           options.pageSize ?? DEFAULT_OPTIONS.pageSize,
           "pageSize",
         ),
-      ),
-      concurrency: positiveInteger(
-        options.concurrency ?? DEFAULT_OPTIONS.concurrency,
-        "concurrency",
       ),
     };
   }
@@ -183,26 +189,7 @@ export class DiscordReader {
       );
       const value = expectRecord(guild, "guild");
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
         facts: {
-          id: expectString(value.id, "guild.id"),
-          name: expectString(value.name, "guild.name"),
-          description: optionalNullableString(
-            value.description,
-            "guild.description",
-          ),
-          ownerId: expectString(value.owner_id, "guild.owner_id"),
-          features: expectStringArray(value.features, "guild.features"),
-          verificationLevel: expectNumber(
-            value.verification_level,
-            "guild.verification_level",
-          ),
-          premiumTier: expectNumber(value.premium_tier, "guild.premium_tier"),
-          premiumSubscriptionCount: optionalNumber(
-            value.premium_subscription_count,
-            "guild.premium_subscription_count",
-          ),
           approximateMemberCount: optionalNumber(
             value.approximate_member_count,
             "guild.approximate_member_count",
@@ -211,21 +198,42 @@ export class DiscordReader {
             value.approximate_presence_count,
             "guild.approximate_presence_count",
           ),
+          description: optionalNullableString(
+            value.description,
+            "guild.description",
+          ),
+          features: expectStringArray(value.features, "guild.features"),
+          id: expectString(value.id, "guild.id"),
+          name: expectString(value.name, "guild.name"),
+          ownerId: expectString(value.owner_id, "guild.owner_id"),
+          premiumSubscriptionCount: optionalNumber(
+            value.premium_subscription_count,
+            "guild.premium_subscription_count",
+          ),
+          premiumTier: expectNumber(value.premium_tier, "guild.premium_tier"),
+          verificationLevel: expectNumber(
+            value.verification_level,
+            "guild.verification_level",
+          ),
         },
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [] as UnavailableMetric[],
       };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
         facts: null,
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [
           {
-            scope: "server-overview",
             reason:
               "Discord did not allow this bot to view the configured guild.",
             requiredPermissions: ["Server membership"],
+            scope: "server-overview",
           },
         ] satisfies UnavailableMetric[],
       };
@@ -281,16 +289,16 @@ export class DiscordReader {
       .map(channel => expectRecord(channel, "guild channel"))
       .filter(channel => channel.type !== ChannelType.GuildCategory)
       .map(channel => ({
-        id: expectString(channel.id, "channel.id"),
-        name: expectString(channel.name, "channel.name"),
-        type: channelTypeName(expectNumber(channel.type, "channel.type")),
         categoryId: optionalNullableString(
           channel.parent_id,
           "channel.parent_id",
         ),
+        id: expectString(channel.id, "channel.id"),
+        name: expectString(channel.name, "channel.name"),
+        nsfw: optionalBoolean(channel.nsfw, "channel.nsfw"),
         position: expectNumber(channel.position, "channel.position"),
         topic: optionalNullableString(channel.topic, "channel.topic"),
-        nsfw: optionalBoolean(channel.nsfw, "channel.nsfw"),
+        type: channelTypeName(expectNumber(channel.type, "channel.type")),
       }))
       .toSorted(
         (left, right) =>
@@ -301,11 +309,11 @@ export class DiscordReader {
       .map(role => expectRecord(role, "guild role"))
       .map(role => ({
         id: expectString(role.id, "role.id"),
+        managed: expectBoolean(role.managed, "role.managed"),
+        mentionable: expectBoolean(role.mentionable, "role.mentionable"),
         name: expectString(role.name, "role.name"),
         permissions: expectString(role.permissions, "role.permissions"),
         position: expectNumber(role.position, "role.position"),
-        managed: expectBoolean(role.managed, "role.managed"),
-        mentionable: expectBoolean(role.mentionable, "role.mentionable"),
       }))
       .toSorted((left, right) => right.position - left.position);
 
@@ -313,14 +321,14 @@ export class DiscordReader {
       .map(thread => expectRecord(thread, "active thread"))
       .map(thread => ({
         id: expectString(thread.id, "thread.id"),
-        name: expectString(thread.name, "thread.name"),
-        parentId: optionalNullableString(thread.parent_id, "thread.parent_id"),
-        ownerId: optionalString(thread.owner_id, "thread.owner_id"),
+        memberCount: optionalNumber(thread.member_count, "thread.member_count"),
         messageCount: optionalNumber(
           thread.message_count,
           "thread.message_count",
         ),
-        memberCount: optionalNumber(thread.member_count, "thread.member_count"),
+        name: expectString(thread.name, "thread.name"),
+        ownerId: optionalString(thread.owner_id, "thread.owner_id"),
+        parentId: optionalNullableString(thread.parent_id, "thread.parent_id"),
       }))
       .toSorted((left, right) => left.name.localeCompare(right.name));
 
@@ -329,33 +337,33 @@ export class DiscordReader {
       return {
         id: expectString(value.id, "channel.id"),
         name: expectString(value.name, "channel.name"),
-        type: expectNumber(value.type, "channel.type"),
         permission_overwrites: mapPermissionOverwrites(
           value.permission_overwrites,
         ),
+        type: expectNumber(value.type, "channel.type"),
       };
     });
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
+      calculations: {
+        activeThreadCount: threadResult.data ? activeThreads.length : null,
+        categoryCount: channelResult.data ? categories.length : null,
+        channelCount: channelResult.data ? channels.length : null,
+        permissionRiskIndicators: assessPermissionRisks({
+          channels: riskChannels,
+          guildId: this.#guildId,
+          roles,
+        }),
+        roleCount: roleResult.data ? roles.length : null,
+      },
       facts: {
+        activeThreads: threadResult.data ? activeThreads : null,
         categories: channelResult.data ? categories : null,
         channels: channelResult.data ? channels : null,
         roles: roleResult.data ? roles : null,
-        activeThreads: threadResult.data ? activeThreads : null,
       },
-      calculations: {
-        categoryCount: channelResult.data ? categories.length : null,
-        channelCount: channelResult.data ? channels.length : null,
-        roleCount: roleResult.data ? roles.length : null,
-        activeThreadCount: threadResult.data ? activeThreads.length : null,
-        permissionRiskIndicators: assessPermissionRisks({
-          guildId: this.#guildId,
-          roles,
-          channels: riskChannels,
-        }),
-      },
+      retrievedAt: this.#options.now().toISOString(),
+      source: SOURCE,
       unavailable: [
         ...channelResult.unavailable,
         ...roleResult.unavailable,
@@ -380,8 +388,8 @@ export class DiscordReader {
     const channels = eligibleChannels.slice(0, this.#options.maxChannels);
     const plans = channels.map(channel => ({
       channel,
-      missingPermission: missingMessagePermission(channel, permissionContext),
       messageLimit: 0,
+      missingPermission: missingMessagePermission(channel, permissionContext),
     }));
     const readablePlans = plans.filter(plan => !plan.missingPermission);
     const messageLimits = allocateMessageLimits(
@@ -399,14 +407,14 @@ export class DiscordReader {
       (plan): Promise<ChannelScanResult> => {
         if (plan.missingPermission) {
           return Promise.resolve({
+            messageLimit: 0,
+            requestCount: 0,
             scan: {
               ...channelIdentity(plan.channel),
-              status: "unavailable",
               messages: [],
               reason: plan.missingPermission,
+              status: "unavailable",
             },
-            requestCount: 0,
-            messageLimit: 0,
           });
         }
         return this.#scanChannelMessages(
@@ -419,9 +427,9 @@ export class DiscordReader {
     const scans = scanResults.map(result => result.scan);
     const calculations = calculateMessageActivity(scans, observationPeriod);
     const unavailable = calculations.unavailableChannels.map(channel => ({
-      scope: `channel:${channel.channelId}`,
       reason: channel.reason,
       requiredPermissions: requiredPermissionsForMessageReason(channel.reason),
+      scope: `channel:${channel.channelId}`,
     }));
     const scannedChannelCount = scanResults.filter(
       result => result.requestCount > 0,
@@ -432,29 +440,29 @@ export class DiscordReader {
       || scannedChannelCount < readablePlans.length;
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
-      observationPeriod,
+      calculations,
       facts: {
         channels: scanResults.map(({ scan, requestCount, messageLimit }) => ({
-          id: scan.channelId,
-          name: scan.channelName,
           availability: scan.status,
           fetchedMessageCount: scan.messages.length,
-          requestCount,
+          id: scan.channelId,
           messageLimit,
+          name: scan.channelName,
+          requestCount,
         })),
       },
-      calculations,
+      observationPeriod,
+      retrievedAt: this.#options.now().toISOString(),
       scan: {
         eligibleChannelCount: eligibleChannels.length,
-        selectedChannelCount: channels.length,
-        scannedChannelCount,
         maxChannels: this.#options.maxChannels,
         maxMessagesPerChannel: this.#options.maxMessagesPerChannel,
         maxTotalMessages: this.#options.maxTotalMessages,
+        scannedChannelCount,
+        selectedChannelCount: channels.length,
         truncated,
       },
+      source: SOURCE,
       unavailable,
     };
   }
@@ -484,8 +492,8 @@ export class DiscordReader {
         if (missingPermission) {
           return Promise.resolve({
             ...channelIdentity(channel),
-            status: "unavailable" as const,
             reason: missingPermission,
+            status: "unavailable" as const,
           });
         }
         return this.#latestVisibleMessage(channel);
@@ -496,25 +504,25 @@ export class DiscordReader {
       thresholdDays: inactiveDays,
     });
     const unavailable = calculations.unavailableChannels.map(channel => ({
-      scope: `channel:${channel.channelId}`,
       reason: channel.reason,
       requiredPermissions: requiredPermissionsForMessageReason(channel.reason),
+      scope: `channel:${channel.channelId}`,
     }));
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
-      observationPeriod,
+      calculations,
       facts: {
         latestVisibleMessages: observations,
       },
-      calculations,
+      observationPeriod,
+      retrievedAt: this.#options.now().toISOString(),
       scan: {
         eligibleChannelCount: eligibleChannels.length,
-        scannedChannelCount: channels.length,
         maxChannels: this.#options.maxChannels,
+        scannedChannelCount: channels.length,
         truncated: eligibleChannels.length > channels.length,
       },
+      source: SOURCE,
       unavailable,
     };
   }
@@ -536,32 +544,29 @@ export class DiscordReader {
           );
         })
         .map(event => {
-          const metadata =
-            event.entity_metadata === null
-            || event.entity_metadata === undefined
-              ? undefined
-              : expectRecord(
-                  event.entity_metadata,
-                  "scheduled event.entity_metadata",
-                );
+          let metadata: Record<string, unknown> | undefined = undefined;
+          if (
+            event.entity_metadata !== null
+            && event.entity_metadata !== undefined
+          ) {
+            metadata = expectRecord(
+              event.entity_metadata,
+              "scheduled event.entity_metadata",
+            );
+          }
           return {
-            id: expectString(event.id, "scheduled event.id"),
-            name: expectString(event.name, "scheduled event.name"),
-            description: optionalNullableString(
-              event.description,
-              "scheduled event.description",
-            ),
             channelId: optionalNullableString(
               event.channel_id,
               "scheduled event.channel_id",
             ),
-            scheduledStartTime: expectString(
-              event.scheduled_start_time,
-              "scheduled event.scheduled_start_time",
+            description: optionalNullableString(
+              event.description,
+              "scheduled event.description",
             ),
-            scheduledEndTime: optionalNullableString(
-              event.scheduled_end_time,
-              "scheduled event.scheduled_end_time",
+            id: expectString(event.id, "scheduled event.id"),
+            interestedUserCount: optionalNumber(
+              event.user_count,
+              "scheduled event.user_count",
             ),
             location: metadata
               ? optionalNullableString(
@@ -569,12 +574,17 @@ export class DiscordReader {
                   "scheduled event.location",
                 )
               : undefined,
+            name: expectString(event.name, "scheduled event.name"),
+            scheduledEndTime: optionalNullableString(
+              event.scheduled_end_time,
+              "scheduled event.scheduled_end_time",
+            ),
+            scheduledStartTime: expectString(
+              event.scheduled_start_time,
+              "scheduled event.scheduled_start_time",
+            ),
             status: scheduledEventStatusName(
               expectNumber(event.status, "scheduled event.status"),
-            ),
-            interestedUserCount: optionalNumber(
-              event.user_count,
-              "scheduled event.user_count",
             ),
           };
         })
@@ -590,27 +600,29 @@ export class DiscordReader {
         );
 
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
-        observedAt,
-        facts: { events },
         calculations: { upcomingEventCount: events.length },
+        facts: { events },
+        observedAt,
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [] as UnavailableMetric[],
       };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
-        observedAt,
-        facts: { events: null },
         calculations: { upcomingEventCount: null },
+        facts: { events: null },
+        observedAt,
+        retrievedAt: this.#options.now().toISOString(),
+        source: SOURCE,
         unavailable: [
           {
-            scope: "scheduled-events",
             reason:
               "Discord did not allow this bot to view guild scheduled events.",
             requiredPermissions: ["View Channel for event channels"],
+            scope: "scheduled-events",
           },
         ] satisfies UnavailableMetric[],
       };
@@ -618,10 +630,14 @@ export class DiscordReader {
   }
 
   async getRecentAuditLog(days: number) {
-    const observationPeriod = this.#periodForDays(days, 45, "audit log");
-    const entries: Array<Record<string, unknown>> = [];
+    const observationPeriod = this.#periodForDays(
+      days,
+      MAX_AUDIT_LOOKBACK_DAYS,
+      "audit log",
+    );
+    const entries: Record<string, unknown>[] = [];
     const users = new Map<string, string>();
-    let before: string | undefined;
+    let before: string | undefined = undefined;
     let reachedPeriodStart = false;
 
     try {
@@ -630,11 +646,13 @@ export class DiscordReader {
         && !reachedPeriodStart
       ) {
         const limit = Math.min(
-          100,
+          DISCORD_PAGE_SIZE_LIMIT,
           this.#options.maxAuditEntries - entries.length,
         );
         const query = new URLSearchParams({ limit: String(limit) });
-        if (before) query.set("before", before);
+        if (before) {
+          query.set("before", before);
+        }
         const page = await this.#get<RESTGetAPIAuditLogResult>(
           Routes.guildAuditLog(this.#guildId),
           query,
@@ -654,7 +672,9 @@ export class DiscordReader {
           pageRecord.audit_log_entries,
           "audit log.audit_log_entries",
         ).map(entry => expectRecord(entry, "audit log entry"));
-        if (pageEntries.length === 0) break;
+        if (pageEntries.length === 0) {
+          break;
+        }
 
         for (const entry of pageEntries) {
           const id = expectString(entry.id, "audit log entry.id");
@@ -664,34 +684,40 @@ export class DiscordReader {
             break;
           }
           entries.push(entry);
-          if (entries.length >= this.#options.maxAuditEntries) break;
+          if (entries.length >= this.#options.maxAuditEntries) {
+            break;
+          }
         }
 
         const nextBefore = expectString(
-          pageEntries.at(-1)?.id,
+          pageEntries.at(-1)?.id, // oxlint-disable-line no-magic-numbers
           "oldest audit log entry.id",
         );
-        if (nextBefore === before || pageEntries.length < limit) break;
+        if (nextBefore === before || pageEntries.length < limit) {
+          break;
+        }
         before = nextBefore;
       }
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
-        source: SOURCE,
-        retrievedAt: this.#options.now().toISOString(),
-        observationPeriod,
         facts: { entries: null },
+        observationPeriod,
+        retrievedAt: this.#options.now().toISOString(),
         scan: {
           fetchedEntryCount: 0,
           maxEntries: this.#options.maxAuditEntries,
           truncated: false,
         },
+        source: SOURCE,
         unavailable: [
           {
-            scope: "audit-log",
             reason:
               "Discord did not allow this bot to view the guild audit log.",
             requiredPermissions: ["View Audit Log"],
+            scope: "audit-log",
           },
         ] satisfies UnavailableMetric[],
       };
@@ -707,61 +733,63 @@ export class DiscordReader {
         "audit log entry.user_id",
       );
       return {
+        actionName: auditLogActionName(actionType),
+        actionType,
+        actorId: userId,
+        actorUsername: userId ? users.get(userId) : undefined,
+        changeCount: Array.isArray(entry.changes) ? entry.changes.length : 0,
         id: expectString(entry.id, "audit log entry.id"),
         occurredAt: snowflakeTimestamp(
           expectString(entry.id, "audit log entry.id"),
         ),
-        actionType,
-        actionName: auditLogActionName(actionType),
-        actorId: userId,
-        actorUsername: userId ? users.get(userId) : undefined,
+        reason: optionalNullableString(entry.reason, "audit log entry.reason"),
         targetId: optionalNullableString(
           entry.target_id,
           "audit log entry.target_id",
         ),
-        reason: optionalNullableString(entry.reason, "audit log entry.reason"),
-        changeCount: Array.isArray(entry.changes) ? entry.changes.length : 0,
       };
     });
     const truncated =
       entries.length >= this.#options.maxAuditEntries && !reachedPeriodStart;
 
     return {
-      source: SOURCE,
-      retrievedAt: this.#options.now().toISOString(),
-      observationPeriod,
-      facts: { entries: facts },
       calculations: {
         actionCount: facts.length,
         actionsByType: countBy(facts.map(entry => entry.actionName)),
       },
+      facts: { entries: facts },
+      observationPeriod,
+      retrievedAt: this.#options.now().toISOString(),
       scan: {
         fetchedEntryCount: facts.length,
         maxEntries: this.#options.maxAuditEntries,
         truncated,
       },
+      source: SOURCE,
       unavailable: [] as UnavailableMetric[],
     };
   }
 
-  async #get<T>(route: string, query?: URLSearchParams): Promise<T> {
+  async #get<Result>(route: string, query?: URLSearchParams): Promise<Result> {
     const result = await this.#rest.get(route, query ? { query } : undefined);
-    return result as T;
+    return result as Result;
   }
 
-  async #getOptional<T>(
+  async #getOptional<Result>(
     route: string,
     scope: string,
     reason: string,
     requiredPermissions: string[],
-  ): Promise<{ data: T | undefined; unavailable: UnavailableMetric[] }> {
+  ): Promise<{ data: Result | undefined; unavailable: UnavailableMetric[] }> {
     try {
-      return { data: await this.#get<T>(route), unavailable: [] };
+      return { data: await this.#get<Result>(route), unavailable: [] };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         data: undefined,
-        unavailable: [{ scope, reason, requiredPermissions }],
+        unavailable: [{ reason, requiredPermissions, scope }],
       };
     }
   }
@@ -794,7 +822,7 @@ export class DiscordReader {
       }
     }
 
-    return { guildId: this.#guildId, userId, memberRoleIds, basePermissions };
+    return { basePermissions, guildId: this.#guildId, memberRoleIds, userId };
   }
 
   #periodForDays(
@@ -809,7 +837,7 @@ export class DiscordReader {
     }
     const end = this.#options.now();
     const start = new Date(end.getTime() - days * MILLISECONDS_PER_DAY);
-    return { start: start.toISOString(), end: end.toISOString() };
+    return { end: end.toISOString(), start: start.toISOString() };
   }
 
   #messageChannels(
@@ -823,10 +851,10 @@ export class DiscordReader {
       .map(channel => ({
         id: expectString(channel.id, "channel.id"),
         name: expectString(channel.name, "channel.name"),
-        position: expectNumber(channel.position, "channel.position"),
         permissionOverwrites: mapPermissionOverwrites(
           channel.permission_overwrites,
         ),
+        position: expectNumber(channel.position, "channel.position"),
       }))
       .toSorted(
         (left, right) =>
@@ -839,8 +867,8 @@ export class DiscordReader {
     period: ObservationPeriod,
     messageLimit: number,
   ): Promise<ChannelScanResult> {
-    const messages: Array<{ id: string; timestamp: string }> = [];
-    let before: string | undefined;
+    const messages: { id: string; timestamp: string }[] = [];
+    let before: string | undefined = undefined;
     let requestCount = 0;
 
     try {
@@ -851,14 +879,16 @@ export class DiscordReader {
         );
         if (requestLimit <= 0) {
           return {
-            scan: { ...channelIdentity(channel), status: "capped", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "capped" },
           };
         }
 
         const query = new URLSearchParams({ limit: String(requestLimit) });
-        if (before) query.set("before", before);
+        if (before) {
+          query.set("before", before);
+        }
         requestCount += 1;
         const page = await this.#get<RESTGetAPIChannelMessagesResult>(
           Routes.channelMessages(channel.id),
@@ -871,9 +901,9 @@ export class DiscordReader {
         ).slice(0, requestLimit);
         if (rawPage.length === 0) {
           return {
-            scan: { ...channelIdentity(channel), status: "complete", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "complete" },
           };
         }
 
@@ -885,58 +915,60 @@ export class DiscordReader {
           };
         });
         messages.push(...mappedPage);
-        const oldest = mappedPage.at(-1);
+        const oldest = mappedPage.at(-1); // oxlint-disable-line no-magic-numbers
         if (
           !oldest
           || Date.parse(oldest.timestamp) <= Date.parse(period.start)
         ) {
           return {
-            scan: { ...channelIdentity(channel), status: "complete", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "complete" },
           };
         }
         if (messages.length >= messageLimit) {
           return {
-            scan: { ...channelIdentity(channel), status: "capped", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "capped" },
           };
         }
         if (rawPage.length < requestLimit) {
           return {
-            scan: { ...channelIdentity(channel), status: "complete", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "complete" },
           };
         }
         if (oldest.id === before) {
           return {
-            scan: { ...channelIdentity(channel), status: "capped", messages },
-            requestCount,
             messageLimit,
+            requestCount,
+            scan: { ...channelIdentity(channel), messages, status: "capped" },
           };
         }
         before = oldest.id;
       }
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
+        messageLimit,
+        requestCount,
         scan: {
           ...channelIdentity(channel),
-          status: "unavailable",
           messages: [],
           reason: "Missing View Channel or Read Message History permission.",
+          status: "unavailable",
         },
-        requestCount,
-        messageLimit,
       };
     }
 
     return {
-      scan: { ...channelIdentity(channel), status: "capped", messages },
-      requestCount,
       messageLimit,
+      requestCount,
+      scan: { ...channelIdentity(channel), messages, status: "capped" },
     };
   }
 
@@ -949,38 +981,41 @@ export class DiscordReader {
         new URLSearchParams({ limit: "1" }),
       );
       const messages = expectArray(page, `latest message for #${channel.name}`);
-      const first = messages[0];
+      const [first] = messages;
+      let latestVisibleMessageAt: string | null = null;
+      if (first !== undefined) {
+        latestVisibleMessageAt = expectString(
+          expectRecord(first, `latest message for #${channel.name}`).timestamp,
+          "message.timestamp",
+        );
+      }
       return {
         ...channelIdentity(channel),
+        latestVisibleMessageAt,
         status: "available",
-        latestVisibleMessageAt:
-          first === undefined
-            ? null
-            : expectString(
-                expectRecord(first, `latest message for #${channel.name}`)
-                  .timestamp,
-                "message.timestamp",
-              ),
       };
     } catch (error) {
-      if (!isHiddenOrMissingPermission(error)) throw error;
+      if (!isHiddenOrMissingPermission(error)) {
+        throw error;
+      }
       return {
         ...channelIdentity(channel),
-        status: "unavailable",
         reason: "Missing View Channel or Read Message History permission.",
+        status: "unavailable",
       };
     }
   }
 }
 
-function channelIdentity(channel: MessageChannel) {
-  return { channelId: channel.id, channelName: channel.name };
-}
+const channelIdentity = (channel: MessageChannel) => ({
+  channelId: channel.id,
+  channelName: channel.name,
+});
 
-function missingMessagePermission(
+const missingMessagePermission = (
   channel: MessageChannel,
   context: BotPermissionContext,
-): string | undefined {
+): string | undefined => {
   const permissions = effectiveChannelPermissions(channel, context);
   if (!hasPermission(permissions, PermissionFlagsBits.ViewChannel)) {
     return "Missing View Channel permission.";
@@ -989,12 +1024,12 @@ function missingMessagePermission(
     return "Missing Read Message History permission.";
   }
   return undefined;
-}
+};
 
-function effectiveChannelPermissions(
+const effectiveChannelPermissions = (
   channel: MessageChannel,
   context: BotPermissionContext,
-): bigint {
+): bigint => {
   if (
     hasPermission(context.basePermissions, PermissionFlagsBits.Administrator)
   ) {
@@ -1005,7 +1040,9 @@ function effectiveChannelPermissions(
   const everyone = channel.permissionOverwrites.find(
     overwrite => overwrite.type === 0 && overwrite.id === context.guildId,
   );
-  if (everyone) permissions = applyOverwrite(permissions, everyone);
+  if (everyone) {
+    permissions = applyOverwrite(permissions, everyone);
+  }
 
   let roleAllow = 0n;
   let roleDeny = 0n;
@@ -1024,31 +1061,30 @@ function effectiveChannelPermissions(
   const member = channel.permissionOverwrites.find(
     overwrite => overwrite.type === 1 && overwrite.id === context.userId,
   );
-  if (member) permissions = applyOverwrite(permissions, member);
+  if (member) {
+    permissions = applyOverwrite(permissions, member);
+  }
   return permissions;
-}
+};
 
-function applyOverwrite(
+const applyOverwrite = (
   permissions: bigint,
   overwrite: PermissionOverwrite,
-): bigint {
-  return (permissions & ~BigInt(overwrite.deny)) | BigInt(overwrite.allow);
-}
+): bigint => (permissions & ~BigInt(overwrite.deny)) | BigInt(overwrite.allow);
 
-function hasPermission(permissions: bigint, permission: bigint): boolean {
-  return (
-    (permissions & PermissionFlagsBits.Administrator)
-      === PermissionFlagsBits.Administrator
-    || (permissions & permission) === permission
-  );
-}
+const hasPermission = (permissions: bigint, permission: bigint): boolean =>
+  (permissions & PermissionFlagsBits.Administrator)
+    === PermissionFlagsBits.Administrator
+  || (permissions & permission) === permission;
 
-function allocateMessageLimits(
+const allocateMessageLimits = (
   channelCount: number,
   totalLimit: number,
   perChannelLimit: number,
-): number[] {
-  if (channelCount === 0) return [];
+): number[] => {
+  if (channelCount === 0) {
+    return [];
+  }
 
   const evenLimit = Math.min(
     perChannelLimit,
@@ -1065,22 +1101,24 @@ function allocateMessageLimits(
     remaining -= 1;
   }
   return limits;
-}
+};
 
-function requiredPermissionsForMessageReason(reason: string): string[] {
-  if (reason === "Missing View Channel permission.") return ["View Channel"];
+const requiredPermissionsForMessageReason = (reason: string): string[] => {
+  if (reason === "Missing View Channel permission.") {
+    return ["View Channel"];
+  }
   if (reason === "Missing Read Message History permission.") {
     return ["Read Message History"];
   }
   return ["View Channel", "Read Message History"];
-}
+};
 
-async function mapWithConcurrency<T, R>(
-  values: readonly T[],
+const mapWithConcurrency = async <Input, Output>(
+  values: readonly Input[],
   concurrency: number,
-  operation: (value: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = [];
+  operation: (value: Input) => Promise<Output>,
+): Promise<Output[]> => {
+  const results: Output[] = [];
   results.length = values.length;
   let nextIndex = 0;
   const workers = Array.from(
@@ -1090,130 +1128,142 @@ async function mapWithConcurrency<T, R>(
         const index = nextIndex;
         nextIndex += 1;
         const value = values[index];
-        if (value !== undefined) results[index] = await operation(value);
+        if (value !== undefined) {
+          results[index] = await operation(value);
+        }
       }
     },
   );
   await Promise.all(workers);
   return results;
-}
+};
 
-function mapPermissionOverwrites(value: unknown) {
-  if (value === undefined) return [];
+const mapPermissionOverwrites = (value: unknown) => {
+  if (value === undefined) {
+    return [];
+  }
   return expectArray(value, "channel.permission_overwrites").map(overwrite => {
     const record = expectRecord(overwrite, "channel permission overwrite");
     return {
-      id: expectString(record.id, "channel permission overwrite.id"),
-      type: expectNumber(record.type, "channel permission overwrite.type"),
       allow: expectString(record.allow, "channel permission overwrite.allow"),
       deny: expectString(record.deny, "channel permission overwrite.deny"),
+      id: expectString(record.id, "channel permission overwrite.id"),
+      type: expectNumber(record.type, "channel permission overwrite.type"),
     };
   });
-}
+};
 
-function isHiddenOrMissingPermission(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
+const isHiddenOrMissingPermission = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
   const status = "status" in error ? error.status : undefined;
   const code = "code" in error ? error.code : undefined;
   return (
-    status === 403
-    || status === 404
-    || code === 50_001
-    || code === 50_013
-    || code === "50001"
-    || code === "50013"
+    status === HTTP_FORBIDDEN
+    || status === HTTP_NOT_FOUND
+    || code === RESTJSONErrorCodes.MissingAccess
+    || code === RESTJSONErrorCodes.MissingPermissions
+    // Preserve compatibility with transports that surface these codes as strings.
+    || code === String(RESTJSONErrorCodes.MissingAccess)
+    || code === String(RESTJSONErrorCodes.MissingPermissions)
   );
-}
+};
 
-function positiveInteger(value: number, name: string): number {
+const positiveInteger = (value: number, name: string): number => {
   if (!Number.isInteger(value) || value < 1) {
     throw new RangeError(`${name} must be a positive integer.`);
   }
   return value;
-}
+};
 
-function expectRecord(value: unknown, label: string): Record<string, unknown> {
+const expectRecord = (
+  value: unknown,
+  label: string,
+): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value as Record<string, unknown>;
-}
+};
 
-function expectArray(value: unknown, label: string): unknown[] {
+const expectArray = (value: unknown, label: string): unknown[] => {
   if (!Array.isArray(value)) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function expectString(value: unknown, label: string): string {
+const expectString = (value: unknown, label: string): string => {
   if (typeof value !== "string") {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function optionalString(value: unknown, label: string): string | undefined {
-  return value === undefined ? undefined : expectString(value, label);
-}
+const optionalString = (value: unknown, label: string): string | undefined =>
+  value === undefined ? undefined : expectString(value, label);
 
-function optionalNullableString(
+const optionalNullableString = (
   value: unknown,
   label: string,
-): string | null | undefined {
-  if (value === null || value === undefined) return value;
+): string | null | undefined => {
+  if (value === null || value === undefined) {
+    return value;
+  }
   return expectString(value, label);
-}
+};
 
-function expectNumber(value: unknown, label: string): number {
+const expectNumber = (value: unknown, label: string): number => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function optionalNumber(value: unknown, label: string): number | undefined {
-  return value === undefined ? undefined : expectNumber(value, label);
-}
+const optionalNumber = (value: unknown, label: string): number | undefined =>
+  value === undefined ? undefined : expectNumber(value, label);
 
-function expectBoolean(value: unknown, label: string): boolean {
+const expectBoolean = (value: unknown, label: string): boolean => {
   if (typeof value !== "boolean") {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return value;
-}
+};
 
-function optionalBoolean(value: unknown, label: string): boolean | undefined {
-  return value === undefined ? undefined : expectBoolean(value, label);
-}
+const optionalBoolean = (value: unknown, label: string): boolean | undefined =>
+  value === undefined ? undefined : expectBoolean(value, label);
 
-function expectStringArray(value: unknown, label: string): string[] {
+const expectStringArray = (value: unknown, label: string): string[] => {
   const items = expectArray(value, label);
   if (items.some(item => typeof item !== "string")) {
     throw new Error(`Discord returned invalid ${label}.`);
   }
   return items as string[];
-}
+};
 
-function channelTypeName(type: number): string {
-  return ChannelType[type] ?? `Unknown(${type})`;
-}
+const channelTypeName = (type: number): string =>
+  ChannelType[type] ?? `Unknown(${type})`;
 
-function scheduledEventStatusName(status: number): string {
-  return GuildScheduledEventStatus[status] ?? `Unknown(${status})`;
-}
+const scheduledEventStatusName = (status: number): string =>
+  GuildScheduledEventStatus[status] ?? `Unknown(${status})`;
 
-function auditLogActionName(action: number): string {
-  return AuditLogEvent[action] ?? `Unknown(${action})`;
-}
+const auditLogActionName = (action: number): string =>
+  AuditLogEvent[action] ?? `Unknown(${action})`;
 
-function snowflakeTimestamp(id: string): string {
-  const milliseconds = (BigInt(id) >> 22n) + DISCORD_EPOCH;
+const snowflakeTimestamp = (id: string): string => {
+  const milliseconds =
+    (BigInt(id) >> DISCORD_SNOWFLAKE_TIMESTAMP_SHIFT) + DISCORD_EPOCH;
   return new Date(Number(milliseconds)).toISOString();
-}
+};
 
-function countBy(values: readonly string[]): Record<string, number> {
+const countBy = (values: readonly string[]): Record<string, number> => {
   const counts: Record<string, number> = {};
-  for (const value of values) counts[value] = (counts[value] ?? 0) + 1;
+  for (const value of values) {
+    counts[value] = (counts[value] ?? 0) + 1;
+  }
   return counts;
-}
+};
+
+export { DiscordReader };
+export type { DiscordReaderOptions, DiscordRestOptions, DiscordRestTransport };

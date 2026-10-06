@@ -3,11 +3,14 @@ import { defineTool } from "@flue/runtime";
 import { memberRoleFilterSchema } from "#/discord";
 import type { DiscordReader } from "#/discord";
 
-export function createMemberLookupTool(
+const MEMBER_PREVIEW_LIMIT = 25;
+
+export default function createMemberLookupTool(
   reader: Pick<DiscordReader, "getMembersByRoles">,
 ) {
   return defineTool({
     name: "get_members_by_roles",
+
     description: [
       "Find current members of the configured Discord server by role names, IDs, or role mentions.",
       "allOf: must have EVERY listed role; anyOf: must have at least ONE listed role when nonempty;",
@@ -29,11 +32,11 @@ export function createMemberLookupTool(
       return JSON.stringify(
         {
           ...summary,
-          membersPreview: members.slice(0, 25),
-          previewTruncated: members.length > 25,
           matchedCountIsLowerBound: result.status === "partial",
+          membersPreview: members.slice(0, MEMBER_PREVIEW_LIMIT),
+          previewTruncated: members.length > MEMBER_PREVIEW_LIMIT,
         },
-        null,
+        undefined,
         2,
       );
     },

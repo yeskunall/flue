@@ -2,12 +2,12 @@
 
 import { useModel, useResponseStart } from "@flue/runtime";
 
-import { useDiscordTools } from "#/agents/analyst/tools/discord.ts";
-import { getDiscordReader } from "#/discord/client";
+import useDiscordTools from "#/agents/analyst/tools/discord.ts";
+import getDiscordReader from "#/discord/client";
 
-export const DEFAULT_MODEL = "openrouter/openai/gpt-6-luna";
+const DEFAULT_MODEL = "openrouter/openai/gpt-6-luna";
 
-export const DISCORD_ANALYST_INSTRUCTIONS = `You are a careful Discord server analyst for one server chosen by trusted application configuration.
+const DISCORD_ANALYST_INSTRUCTIONS = `You are a careful Discord server analyst for one server chosen by trusted application configuration.
 
 Use the Discord tools for every claim about the server. You cannot choose another guild, token, or credential. Never ask the user to send credentials in chat.
 
@@ -32,15 +32,17 @@ Answering rules:
 - Member roles are current observations over the scan's start/end times, not a historical or atomic snapshot. A Verified role is role membership, not independent verification of a person's identity.
 - Keep the answer concise, use readable headings, and finish with coverage or limitations when any result is partial.`;
 
-export function DiscordAnalyst() {
+const DiscordAnalyst = () => {
   const model = process.env.MODEL?.trim() || DEFAULT_MODEL;
 
   useModel(model, { thinkingLevel: "low" });
   useResponseStart(() => ({
-    timestamp: new Date().toISOString(),
     model,
+    timestamp: new Date().toISOString(),
   }));
   useDiscordTools(getDiscordReader());
 
   return DISCORD_ANALYST_INSTRUCTIONS;
-}
+};
+
+export { DEFAULT_MODEL, DISCORD_ANALYST_INSTRUCTIONS, DiscordAnalyst };
